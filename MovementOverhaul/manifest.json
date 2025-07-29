@@ -1,0 +1,16 @@
+﻿{
+  "Name": "Movement Overhaul",
+  "Author": "Rafseazz",
+  "Version": "2.0.0",
+  "Description": "Adds jumping and sprinting abilities.",
+  "UniqueID": "Rafseazz.MovementOverhaul",
+  "EntryDll": "MovementOverhaul.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+      "UniqueID": "spacechase0.GenericModConfigMenu",
+      "IsRequired": false
+    }
+  ]
+}

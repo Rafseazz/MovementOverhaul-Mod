@@ -1,0 +1,10 @@
+C:\Users\User\source\repos\JumpMod\JumpMod\bin\Debug\net6.0\JumpMod.deps.json
+C:\Users\User\source\repos\JumpMod\JumpMod\bin\Debug\net6.0\JumpMod.dll
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.csproj.AssemblyReference.cache
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.AssemblyInfoInputs.cache
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.AssemblyInfo.cs
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.csproj.CoreCompileInputs.cache
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.dll
+C:\Users\User\source\repos\JumpMod\JumpMod\bin\Debug\net6.0\GenericModConfigMenu.dll
+C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\JumpMod.csproj.Up2Date
