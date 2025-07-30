@@ -1,8 +1,8 @@
 ﻿{
   "Name": "Movement Overhaul",
   "Author": "Rafseazz",
-  "Version": "2.0.0",
-  "Description": "Adds jumping and sprinting abilities.",
+  "Version": "1.0.0",
+  "Description": "Adds immersive jumping and sprinting abilities.",
   "UniqueID": "Rafseazz.MovementOverhaul",
   "EntryDll": "MovementOverhaul.dll",
   "MinimumApiVersion": "4.0.0",

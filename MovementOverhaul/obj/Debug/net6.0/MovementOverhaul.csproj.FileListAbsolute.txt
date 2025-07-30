@@ -6,3 +6,12 @@ C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\MovementOverhaul.Ass
 C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\MovementOverhaul.AssemblyInfo.cs
 C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\MovementOverhaul.csproj.CoreCompileInputs.cache
 C:\Users\User\source\repos\JumpMod\JumpMod\obj\Debug\net6.0\MovementOverhaul.dll
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\bin\Debug\net6.0\MovementOverhaul.deps.json
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\bin\Debug\net6.0\MovementOverhaul.dll
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.csproj.AssemblyReference.cache
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.AssemblyInfoInputs.cache
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.AssemblyInfo.cs
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.csproj.CoreCompileInputs.cache
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.sourcelink.json
+C:\Users\User\Documents\GitHub\MovementOverhaul-Mod\MovementOverhaul\obj\Debug\net6.0\MovementOverhaul.dll
