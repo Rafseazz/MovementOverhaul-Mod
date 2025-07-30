@@ -47,6 +47,8 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
+            if (!ModEntry.Config.EnableSprint) return;
+
             switch (ModEntry.Config.SprintActivation)
             {
                 case SprintMode.DoubleTap:
@@ -85,6 +87,13 @@ namespace MovementOverhaul
 
         public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
+            if (!ModEntry.Config.EnableSprint)
+            {
+                // Failsafe??
+                if (this.isSprinting) this.StopSprint();
+                return;
+            }
+
             if (!Context.CanPlayerMove)
             {
                 if (this.isSprinting) this.StopSprint();
@@ -193,6 +202,8 @@ namespace MovementOverhaul
 
         public float GetSpeedMultiplier()
         {
+            if (!ModEntry.Config.EnableSprint) return 1f;
+
             if (!this.isSprinting) return 1f;
             return Game1.player.isRidingHorse()
                 ? ModEntry.Config.HorseSprintSpeedMultiplier

@@ -88,13 +88,21 @@ namespace MovementOverhaul
             Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
             Vector2 bestLandingTile = jumper.Tile;
 
-            for (int i = 1; i <= jumpDistance; i++)
+            if (ModEntry.Config.HopOverAnything)
             {
-                Vector2 currentTile = jumper.Tile + moveDirection * i;
-                if (this.IsSolidWall(currentTile)) break;
-                if (this.IsJumpableObjectOnTile(currentTile)) continue;
-                if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
-                else break;
+                bestLandingTile = jumper.Tile + moveDirection * jumpDistance;
+            }
+            else
+            {
+                bestLandingTile = jumper.Tile;
+                for (int i = 1; i <= jumpDistance; i++)
+                {
+                    Vector2 currentTile = jumper.Tile + moveDirection * i;
+                    if (this.IsSolidWall(currentTile)) break;
+                    if (this.IsJumpableObjectOnTile(currentTile)) continue;
+                    if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
+                    else break;
+                }
             }
 
             this.StartJump(player, bestLandingTile);
@@ -133,7 +141,15 @@ namespace MovementOverhaul
             this.jumpProgress = 0;
             this.originalFrame = jumper.Sprite.currentFrame;
             player.canMove = false;
-            Game1.playSound(ModEntry.Config.JumpSound);
+
+            if (!string.IsNullOrEmpty(ModEntry.Config.JumpSound))
+            {
+                Game1.playSound(ModEntry.Config.JumpSound);
+                if (ModEntry.Config.AmplifyJumpSound)
+                {
+                    Game1.playSound(ModEntry.Config.JumpSound);
+                }
+            }
 
             if (landingTile.HasValue)
             {
@@ -154,14 +170,23 @@ namespace MovementOverhaul
                 Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
                 Vector2 bestLandingTile = jumper.Tile;
 
-                for (int i = 1; i <= jumpDistance; i++)
+                if (ModEntry.Config.HopOverAnything)
                 {
-                    Vector2 currentTile = jumper.Tile + moveDirection * i;
-                    if (this.IsSolidWall(currentTile)) break;
-                    if (this.IsJumpableObjectOnTile(currentTile)) continue;
-                    if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
-                    else break;
+                    bestLandingTile = jumper.Tile + moveDirection * jumpDistance;
                 }
+                else
+                {
+                    bestLandingTile = jumper.Tile;
+                    for (int i = 1; i <= jumpDistance; i++)
+                    {
+                        Vector2 currentTile = jumper.Tile + moveDirection * i;
+                        if (this.IsSolidWall(currentTile)) break;
+                        if (this.IsJumpableObjectOnTile(currentTile)) continue;
+                        if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
+                        else break;
+                    }
+                }
+
                 this.targetPosition = (bestLandingTile == jumper.Tile)
                     ? jumper.Position
                     : new Vector2(bestLandingTile.X * 64 + 32, bestLandingTile.Y * 64 + 32) - new Vector2(jumper.GetBoundingBox().Width / 2f, jumper.GetBoundingBox().Height / 2f);

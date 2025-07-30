@@ -49,10 +49,13 @@ namespace MovementOverhaul
         public float NormalJumpDistance { get; set; } = 1.5f;
         public float JumpDistanceScaleFactor { get; set; } = 0.4f;
         public string JumpSound { get; set; } = "dwoop";
+        public bool AmplifyJumpSound { get; set; } = false;
         public bool JumpOverLargeStumps { get; set; } = false;
         public bool JumpOverLargeLogs { get; set; } = false;
         public bool JumpOverBoulders { get; set; } = false;
         public float HorseJumpPlayerBounce { get; set; } = 0.55f;
+        public bool HopOverAnything { get; set; } = false;
+        public bool EnableSprint { get; set; } = true;
         public SprintMode SprintActivation { get; set; } = SprintMode.DoubleTap;
         public SButton SprintKey { get; set; } = SButton.LeftAlt;
         public float HorseSprintSpeedMultiplier { get; set; } = 2.0f;
@@ -172,6 +175,13 @@ namespace MovementOverhaul
                 allowedValues: new string[] { "dwoop", "jingle1", "stoneStep", "flameSpell", "boop", "coin" },
                 formatAllowedValue: value => value switch { "dwoop" => "Classic Dwoop", "jingle1" => "Jingle", "stoneStep" => "Stone Step", "flameSpell" => "Whoosh", "boop" => "Boop", "coin" => "Coin", _ => value });
 
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Amplify Jump Sound",
+                tooltip: () => "If enabled, plays the jump sound twice to make it louder.",
+                getValue: () => Config.AmplifyJumpSound,
+                setValue: value => Config.AmplifyJumpSound = value
+            );
+
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Jump Over Settings");
             configMenu.AddBoolOption(mod: this.ModManifest,
                 name: () => "Jump Over Large Stumps",
@@ -198,6 +208,20 @@ namespace MovementOverhaul
                 getValue: () => ModEntry.Config.HorseJumpPlayerBounce,
                 setValue: value => ModEntry.Config.HorseJumpPlayerBounce = value,
                 min: 0.0f, max: 1.0f, interval: 0.05f
+            );
+
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Hop Over Anything (Cheat)",
+                tooltip: () => "If enabled, allows you to jump through almost any obstacle.",
+                getValue: () => Config.HopOverAnything,
+                setValue: value => Config.HopOverAnything = value
+            );
+
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Enable Sprint",
+                tooltip: () => "Toggles the sprint ability on or off.",
+                getValue: () => Config.EnableSprint,
+                setValue: value => Config.EnableSprint = value
             );
 
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sprint Settings");
