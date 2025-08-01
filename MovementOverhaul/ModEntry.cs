@@ -71,6 +71,7 @@ namespace MovementOverhaul
         public float JumpDistanceScaleFactor { get; set; } = 0.4f;
         public string JumpSound { get; set; } = "dwoop";
         public bool AmplifyJumpSound { get; set; } = false;
+        public float JumpStaminaCost { get; set; } = 1f;
         public bool JumpOverLargeStumps { get; set; } = false;
         public bool JumpOverLargeLogs { get; set; } = false;
         public bool JumpOverBoulders { get; set; } = false;
@@ -84,6 +85,8 @@ namespace MovementOverhaul
         public float SprintDurationSeconds { get; set; } = 1f;
         public float SprintStaminaCostPerSecond { get; set; } = 5f;
         public string SprintParticleEffect { get; set; } = "Smoke";
+        public bool PathSpeedBonus { get; set; } = true;
+        public float PathSpeedBonusMultiplier { get; set; } = 1.15f;
         public bool EnableSit { get; set; } = true;
         public SButton SitKey { get; set; } = SButton.OemPeriod;
         public float SitRegenDelaySeconds { get; set; } = 1.5f;
@@ -221,129 +224,62 @@ namespace MovementOverhaul
                 }
             );
 
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Jump Settings");
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Instant Jump on Press", tooltip: () => "If enabled, jump immediately on key press. This disables the hold-to-charge mechanic.", getValue: () => ModEntry.Config.InstantJump, setValue: value => ModEntry.Config.InstantJump = value);
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Charge Affects Jump Distance", tooltip: () => "If enabled (and Instant Jump is off), holding the jump button will also increase your jump distance.", getValue: () => Config.ChargeAffectsDistance, setValue: value => Config.ChargeAffectsDistance = value);
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump", tooltip: () => "Toggles the jump ability on or off.", getValue: () => ModEntry.Config.EnableJump, setValue: value => ModEntry.Config.EnableJump = value);
-            configMenu.AddKeybind(mod: this.ModManifest, name: () => "Jump Key", tooltip: () => "The key to press to jump.", getValue: () => ModEntry.Config.JumpKey, setValue: value => ModEntry.Config.JumpKey = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Duration", tooltip: () => "The total time of the jump in frames. Lower is faster.", min: 10f, max: 60f, interval: 1f, getValue: () => ModEntry.Config.JumpDuration, setValue: value => ModEntry.Config.JumpDuration = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Height", tooltip: () => "The height of the jump's arc.", min: 24f, max: 96f, interval: 1f, getValue: () => ModEntry.Config.JumpHeight, setValue: value => ModEntry.Config.JumpHeight = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Base Jump Distance", tooltip: () => "The distance (in tiles) of a running jump with no speed buffs.", min: 1.0f, max: 5.0f, interval: 0.1f, getValue: () => Config.NormalJumpDistance, setValue: value => Config.NormalJumpDistance = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Distance Scale Factor", tooltip: () => "How much extra distance you get per point of speed.", min: 0.1f, max: 1.0f, interval: 0.1f, getValue: () => ModEntry.Config.JumpDistanceScaleFactor, setValue: value => ModEntry.Config.JumpDistanceScaleFactor = value);
-            configMenu.AddTextOption(mod: this.ModManifest, name: () => "Jump Sound", tooltip: () => "The sound that plays when you jump.", getValue: () => ModEntry.Config.JumpSound, setValue: value => ModEntry.Config.JumpSound = value,
+            // --- JUMP SETTINGS ---
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.jump.title"));
+
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.instant-jump.name"), tooltip: () => this.Helper.Translation.Get("config.instant-jump.tooltip"), getValue: () => Config.InstantJump, setValue: value => Config.InstantJump = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.charge-affects-distance.name"), tooltip: () => this.Helper.Translation.Get("config.charge-affects-distance.tooltip"), getValue: () => Config.ChargeAffectsDistance, setValue: value => Config.ChargeAffectsDistance = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-jump.name"), tooltip: () => this.Helper.Translation.Get("config.enable-jump.tooltip"), getValue: () => Config.EnableJump, setValue: value => Config.EnableJump = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.hop-over-anything.name"), tooltip: () => this.Helper.Translation.Get("config.hop-over-anything.tooltip"), getValue: () => Config.HopOverAnything, setValue: value => Config.HopOverAnything = value);
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-key.name"), tooltip: () => this.Helper.Translation.Get("config.jump-key.tooltip"), getValue: () => Config.JumpKey, setValue: value => Config.JumpKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-stamina-cost.name"), tooltip: () => this.Helper.Translation.Get("config.jump-stamina-cost.tooltip"), getValue: () => Config.JumpStaminaCost, setValue: value => Config.JumpStaminaCost = value, min: 0f, max: 10f, interval: 0.5f);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-duration.name"), tooltip: () => this.Helper.Translation.Get("config.jump-duration.tooltip"), min: 10f, max: 60f, interval: 1f, getValue: () => Config.JumpDuration, setValue: value => Config.JumpDuration = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-height.name"), tooltip: () => this.Helper.Translation.Get("config.jump-height.tooltip"), min: 24f, max: 96f, interval: 1f, getValue: () => Config.JumpHeight, setValue: value => Config.JumpHeight = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.base-jump-distance.name"), tooltip: () => this.Helper.Translation.Get("config.base-jump-distance.tooltip"), min: 1.0f, max: 5.0f, interval: 0.1f, getValue: () => Config.NormalJumpDistance, setValue: value => Config.NormalJumpDistance = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.name"), tooltip: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.tooltip"), min: 0.1f, max: 1.0f, interval: 0.1f, getValue: () => Config.JumpDistanceScaleFactor, setValue: value => Config.JumpDistanceScaleFactor = value);
+            configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-sound.name"), tooltip: () => this.Helper.Translation.Get("config.jump-sound.tooltip"), getValue: () => Config.JumpSound, setValue: value => Config.JumpSound = value,
                 allowedValues: new string[] { "dwoop", "jingle1", "stoneStep", "flameSpell", "boop", "coin" },
-                formatAllowedValue: value => value switch { "dwoop" => "Classic Dwoop", "jingle1" => "Jingle", "stoneStep" => "Stone Step", "flameSpell" => "Whoosh", "boop" => "Boop", "coin" => "Coin", _ => value });
-
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Amplify Jump Sound",
-                tooltip: () => "If enabled, plays the jump sound twice to make it louder.",
-                getValue: () => Config.AmplifyJumpSound,
-                setValue: value => Config.AmplifyJumpSound = value
+                formatAllowedValue: value => this.Helper.Translation.Get($"config.jump-sound.value.{value}", new { defaultValue = value })
             );
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.amplify-jump-sound.name"), tooltip: () => this.Helper.Translation.Get("config.amplify-jump-sound.tooltip"), getValue: () => Config.AmplifyJumpSound, setValue: value => Config.AmplifyJumpSound = value);
 
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Jump Over Settings");
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Jump Over Large Stumps",
-                tooltip: () => "If enabled, allows you to jump over large stumps.",
-                getValue: () => ModEntry.Config.JumpOverLargeStumps,
-                setValue: value => ModEntry.Config.JumpOverLargeStumps = value
-            );
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Jump Over Large Logs",
-                tooltip: () => "If enabled, allows you to jump over large logs.",
-                getValue: () => ModEntry.Config.JumpOverLargeLogs,
-                setValue: value => ModEntry.Config.JumpOverLargeLogs = value
-            );
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Jump Over Boulders",
-                tooltip: () => "If enabled, allows you to jump over boulders.",
-                getValue: () => ModEntry.Config.JumpOverBoulders,
-                setValue: value => ModEntry.Config.JumpOverBoulders = value
-            );
+            // JUMP OVER SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.jump-over.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-stumps.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-stumps.tooltip"), getValue: () => Config.JumpOverLargeStumps, setValue: value => Config.JumpOverLargeStumps = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-logs.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-logs.tooltip"), getValue: () => Config.JumpOverLargeLogs, setValue: value => Config.JumpOverLargeLogs = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-boulders.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-boulders.tooltip"), getValue: () => Config.JumpOverBoulders, setValue: value => Config.JumpOverBoulders = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.rider-bounce.name"), tooltip: () => this.Helper.Translation.Get("config.rider-bounce.tooltip"), getValue: () => Config.HorseJumpPlayerBounce, setValue: value => Config.HorseJumpPlayerBounce = value, min: 0.0f, max: 1.0f, interval: 0.05f);
 
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Rider Bounce Factor",
-                tooltip: () => "How much the rider moves in the saddle during a horse jump. 1.0 = glued to saddle, 0.0 = max bounce.",
-                getValue: () => ModEntry.Config.HorseJumpPlayerBounce,
-                setValue: value => ModEntry.Config.HorseJumpPlayerBounce = value,
-                min: 0.0f, max: 1.0f, interval: 0.05f
-            );
-
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Hop Over Anything (Cheat)",
-                tooltip: () => "If enabled, allows you to jump through almost any obstacle.",
-                getValue: () => Config.HopOverAnything,
-                setValue: value => Config.HopOverAnything = value
-            );
-
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sprint Settings");
-
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Enable Sprint",
-                tooltip: () => "Toggles the sprint ability on or off.",
-                getValue: () => Config.EnableSprint,
-                setValue: value => Config.EnableSprint = value
-            );
-
-            configMenu.AddTextOption(mod: this.ModManifest,
-                name: () => "Sprint Activation",
-                tooltip: () => "How sprinting is activated.",
-                getValue: () => Config.SprintActivation.ToString(),
-                setValue: value => Config.SprintActivation = (SprintMode)Enum.Parse(typeof(SprintMode), value),
-                allowedValues: new string[] { "DoubleTap", "Hold", "Toggle" }
-            );
-
-            configMenu.AddKeybind(mod: this.ModManifest,
-                name: () => "Sprint Key",
-                tooltip: () => "The key to hold or toggle for sprinting (only for Hold/Toggle modes).",
-                getValue: () => Config.SprintKey,
-                setValue: value => Config.SprintKey = value
-            );
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Sprint Speed Multiplier", tooltip: () => "The speed multiplier to apply when sprinting. 2.0 means double speed.", min: 1.1f, max: 4.0f, interval: 0.1f, getValue: () => ModEntry.Config.SprintSpeedMultiplier, setValue: value => ModEntry.Config.SprintSpeedMultiplier = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Horse Sprint Speed Multiplier", tooltip: () => "The speed multiplier for sprinting while on your horse.", min: 1.1f, max: 4.0f, interval: 0.1f, getValue: () => Config.HorseSprintSpeedMultiplier, setValue: value => Config.HorseSprintSpeedMultiplier = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Sprint Duration (Seconds)", tooltip: () => "How long the sprint lasts in seconds (only for DoubleTap mode).", min: 1f, max: 10f, interval: 0.5f, getValue: () => ModEntry.Config.SprintDurationSeconds, setValue: value => ModEntry.Config.SprintDurationSeconds = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Stamina Cost Per Second", tooltip: () => "How much stamina is drained per second while sprinting.", min: 0f, max: 10f, interval: 0.5f, getValue: () => ModEntry.Config.SprintStaminaCostPerSecond, setValue: value => ModEntry.Config.SprintStaminaCostPerSecond = value);
-
-            configMenu.AddTextOption(
-                mod: this.ModManifest,
-                name: () => "Sprint Particle Effect",
-                tooltip: () => "Choose the particle effect that appears when you sprint.",
-                getValue: () => ModEntry.Config.SprintParticleEffect,
-                setValue: value => ModEntry.Config.SprintParticleEffect = value,
+            // SPRINT SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.sprint.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-sprint.name"), tooltip: () => this.Helper.Translation.Get("config.enable-sprint.tooltip"), getValue: () => Config.EnableSprint, setValue: value => Config.EnableSprint = value);
+            configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-activation.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-activation.tooltip"), getValue: () => Config.SprintActivation.ToString(), setValue: value => Config.SprintActivation = (SprintMode)Enum.Parse(typeof(SprintMode), value), allowedValues: new string[] { "DoubleTap", "Hold", "Toggle" });
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-key.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-key.tooltip"), getValue: () => Config.SprintKey, setValue: value => Config.SprintKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-duration.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-duration.tooltip"), min: 1f, max: 10f, interval: 0.5f, getValue: () => Config.SprintDurationSeconds, setValue: value => Config.SprintDurationSeconds = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-speed.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-speed.tooltip"), min: 1.1f, max: 4.0f, interval: 0.1f, getValue: () => Config.SprintSpeedMultiplier, setValue: value => Config.SprintSpeedMultiplier = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.horse-sprint-speed.name"), tooltip: () => this.Helper.Translation.Get("config.horse-sprint-speed.tooltip"), min: 1.1f, max: 4.0f, interval: 0.1f, getValue: () => Config.HorseSprintSpeedMultiplier, setValue: value => Config.HorseSprintSpeedMultiplier = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-stamina-cost.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-stamina-cost.tooltip"), min: 0f, max: 10f, interval: 0.5f, getValue: () => Config.SprintStaminaCostPerSecond, setValue: value => Config.SprintStaminaCostPerSecond = value);
+            configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-particles.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-particles.tooltip"), getValue: () => Config.SprintParticleEffect, setValue: value => Config.SprintParticleEffect = value,
                 allowedValues: new string[] { "Smoke", "GreenDust", "Circular", "Leaves", "Fire1", "Fire2", "BlueFire", "Stars", "Water Splash", "Poison", "None" },
-                formatAllowedValue: value => value switch
-                {
-                    "Smoke" => "Smoke - Puffy smoke.",
-                    "GreenDust" => "GreenDust - Shiny green dust.",
-                    "Circular" => "Circular - Circular flat smoke trails.",
-                    "Leaves" => "Leaves - Trail of leaves.",
-                    "Fire1" => "Fire1 - Small flames.",
-                    "Fire2" => "Fire2 - Another small flames.",
-                    "BlueFire" => "BlueFire - Fire! But blue.",
-                    "Stars" => "Stars - Sparkle with magical stars as you run.",
-                    "Water Splash" => "Water Splash - Create a splash effect, great for the beach.",
-                    "Poison" => "Poison - Ew.",
-                    "None" => "None - No visual effect will be shown.",
-                    _ => value
-                }
+                formatAllowedValue: value => this.Helper.Translation.Get($"config.sprint-particles.value.{value}", new { defaultValue = value })
             );
 
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sit Settings");
+            // PATH SPEED BONUS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.path-speed.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.path-speed-enable.name"), tooltip: () => this.Helper.Translation.Get("config.path-speed-enable.tooltip"), getValue: () => Config.PathSpeedBonus, setValue: value => Config.PathSpeedBonus = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.path-speed-multiplier.name"), tooltip: () => this.Helper.Translation.Get("config.path-speed-multiplier.tooltip"), getValue: () => Config.PathSpeedBonusMultiplier, setValue: value => Config.PathSpeedBonusMultiplier = value, min: 1.0f, max: 2.0f, interval: 0.05f);
 
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Sit on Ground", tooltip: () => "If enabled, double-press the Sit Key to sit on the ground and regenerate stamina.", getValue: () => Config.EnableSit, setValue: value => Config.EnableSit = value);
-            configMenu.AddKeybind(mod: this.ModManifest, name: () => "Sit Key", tooltip: () => "The key to double-press to sit on the ground.", getValue: () => Config.SitKey, setValue: value => Config.SitKey = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Regen Delay (Seconds)", tooltip: () => "How long you must sit before stamina regeneration begins.", min: 0f, max: 5f, interval: 0.5f, getValue: () => Config.SitRegenDelaySeconds, setValue: value => Config.SitRegenDelaySeconds = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Ground Regen Rate", tooltip: () => "How much stamina you regenerate per second while sitting on the ground.", min: 1f, max: 10f, interval: 0.5f, getValue: () => Config.SitGroundRegenPerSecond, setValue: value => Config.SitGroundRegenPerSecond = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Chair Regen Rate", tooltip: () => "How much stamina you regenerate per second while sitting in a chair.", min: 1f, max: 15f, interval: 0.5f, getValue: () => Config.SitChairRegenPerSecond, setValue: value => Config.SitChairRegenPerSecond = value);
-
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Social Sitting", tooltip: () => "If enabled, sitting near NPCs or your pet for 15 seconds will slowly increase friendship.", getValue: () => Config.SocialSittingFriendship, setValue: value => Config.SocialSittingFriendship = value);
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Warming by Fire", tooltip: () => "If enabled, sitting near a fire source provides a temporary 'Warmed' buff.", getValue: () => Config.FireSittingBuff, setValue: value => Config.FireSittingBuff = value);
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Meditate for Buff", tooltip: () => "If enabled, sitting still for 60 seconds grants a temporary 'Focused' luck buff.", getValue: () => Config.MeditateForBuff, setValue: value => Config.MeditateForBuff = value);
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Idle Sit Effects",
-                tooltip: () => "If enabled, your farmer will show idle emotes and particles after sitting for a while.",
-                getValue: () => Config.IdleSitEffects,
-                setValue: value => Config.IdleSitEffects = value);
+            // SIT SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.sit.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-sit.name"), tooltip: () => this.Helper.Translation.Get("config.enable-sit.tooltip"), getValue: () => Config.EnableSit, setValue: value => Config.EnableSit = value);
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sit-key.name"), tooltip: () => this.Helper.Translation.Get("config.sit-key.tooltip"), getValue: () => Config.SitKey, setValue: value => Config.SitKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sit-regen-delay.name"), tooltip: () => this.Helper.Translation.Get("config.sit-regen-delay.tooltip"), min: 0f, max: 5f, interval: 0.5f, getValue: () => Config.SitRegenDelaySeconds, setValue: value => Config.SitRegenDelaySeconds = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.ground-regen-rate.name"), tooltip: () => this.Helper.Translation.Get("config.ground-regen-rate.tooltip"), min: 1f, max: 10f, interval: 0.5f, getValue: () => Config.SitGroundRegenPerSecond, setValue: value => Config.SitGroundRegenPerSecond = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.chair-regen-rate.name"), tooltip: () => this.Helper.Translation.Get("config.chair-regen-rate.tooltip"), min: 1f, max: 15f, interval: 0.5f, getValue: () => Config.SitChairRegenPerSecond, setValue: value => Config.SitChairRegenPerSecond = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.social-sitting.name"), tooltip: () => this.Helper.Translation.Get("config.social-sitting.tooltip"), getValue: () => Config.SocialSittingFriendship, setValue: value => Config.SocialSittingFriendship = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.warming-by-fire.name"), tooltip: () => this.Helper.Translation.Get("config.warming-by-fire.tooltip"), getValue: () => Config.FireSittingBuff, setValue: value => Config.FireSittingBuff = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.meditate-for-buff.name"), tooltip: () => this.Helper.Translation.Get("config.meditate-for-buff.tooltip"), getValue: () => Config.MeditateForBuff, setValue: value => Config.MeditateForBuff = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.idle-sit-effects.name"), tooltip: () => this.Helper.Translation.Get("config.idle-sit-effects.tooltip"), getValue: () => Config.IdleSitEffects, setValue: value => Config.IdleSitEffects = value);
         }
     }
 }

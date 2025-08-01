@@ -1,0 +1,122 @@
+﻿{
+  /*********
+  ** Config Menu
+  *********/
+  // Jump Settings
+  "config.jump.title": "Jump Settings",
+  "config.instant-jump.name": "Instant Jump on Press",
+  "config.instant-jump.tooltip": "If enabled, jump immediately on key press. This disables the hold-to-charge mechanic.",
+  "config.charge-affects-distance.name": "Charge Affects Jump Distance",
+  "config.charge-affects-distance.tooltip": "If enabled (and Instant Jump is off), holding the jump button will also increase your jump distance.",
+  "config.enable-jump.name": "Enable Jump",
+  "config.enable-jump.tooltip": "Toggles the jump ability on or off.",
+  "config.jump-key.name": "Jump Key",
+  "config.jump-key.tooltip": "The key to press to jump.",
+  "config.jump-stamina-cost.name": "Jump Stamina Cost",
+  "config.jump-stamina-cost.tooltip": "How much stamina each jump costs. Set to 0 to disable.",
+  "config.jump-duration.name": "Jump Duration",
+  "config.jump-duration.tooltip": "The total time of the jump in frames. Lower is faster.",
+  "config.jump-height.name": "Jump Height",
+  "config.jump-height.tooltip": "The height of the jump's arc.",
+  "config.base-jump-distance.name": "Base Jump Distance",
+  "config.base-jump-distance.tooltip": "The distance (in tiles) of a running jump with no speed buffs.",
+  "config.jump-distance-scale-factor.name": "Jump Distance Scale Factor",
+  "config.jump-distance-scale-factor.tooltip": "How much extra distance you get per point of speed.",
+  "config.jump-sound.name": "Jump Sound",
+  "config.jump-sound.tooltip": "The sound that plays when you jump.",
+  "config.amplify-jump-sound.name": "Amplify Jump Sound",
+  "config.amplify-jump-sound.tooltip": "If enabled, plays the jump sound twice to make it louder.",
+  "config.jump-sound.value.dwoop": "Classic Dwoop",
+  "config.jump-sound.value.jingle1": "Jingle",
+  "config.jump-sound.value.stoneStep": "Stone Step",
+  "config.jump-sound.value.flameSpell": "Whoosh",
+  "config.jump-sound.value.boop": "Boop",
+  "config.jump-sound.value.coin": "Coin",
+
+  // Jump Over Settings
+  "config.jump-over.title": "Jump Over Settings",
+  "config.hop-over-anything.name": "Hop Over Anything (Cheat)",
+  "config.hop-over-anything.tooltip": "If enabled, allows you to jump through almost any obstacle.",
+  "config.jump-over-stumps.name": "Jump Over Large Stumps",
+  "config.jump-over-stumps.tooltip": "If enabled, allows you to jump over large stumps.",
+  "config.jump-over-logs.name": "Jump Over Large Logs",
+  "config.jump-over-logs.tooltip": "If enabled, allows you to jump over large logs.",
+  "config.jump-over-boulders.name": "Jump Over Boulders",
+  "config.jump-over-boulders.tooltip": "If enabled, allows you to jump over boulders.",
+  "config.rider-bounce.name": "Rider Bounce Factor",
+  "config.rider-bounce.tooltip": "How much the rider moves in the saddle during a horse jump. 1.0 = glued to saddle, 0.0 = max bounce.",
+
+  // Sprint Settings
+  "config.sprint.title": "Sprint Settings",
+  "config.enable-sprint.name": "Enable Sprint",
+  "config.enable-sprint.tooltip": "Toggles the sprint ability on or off.",
+  "config.sprint-activation.name": "Sprint Activation",
+  "config.sprint-activation.tooltip": "How sprinting is activated.",
+  "config.sprint-key.name": "Sprint Key",
+  "config.sprint-key.tooltip": "The key to hold or toggle for sprinting (only for Hold/Toggle modes).",
+  "config.sprint-duration.name": "Sprint Duration (Seconds)",
+  "config.sprint-duration.tooltip": "How long the sprint lasts in seconds (only for DoubleTap mode).",
+  "config.sprint-speed.name": "Sprint Speed Multiplier",
+  "config.sprint-speed.tooltip": "The speed multiplier for sprinting on foot.",
+  "config.horse-sprint-speed.name": "Horse Sprint Speed Multiplier",
+  "config.horse-sprint-speed.tooltip": "The speed multiplier for sprinting while on your horse.",
+  "config.sprint-stamina-cost.name": "Stamina Cost Per Second",
+  "config.sprint-stamina-cost.tooltip": "How much stamina is drained per second while sprinting.",
+  "config.sprint-particles.name": "Sprint Particle Effect",
+  "config.sprint-particles.tooltip": "Choose the particle effect that appears when you sprint.",
+  "config.sprint-particles.value.Smoke": "Smoke - Puffy smoke.",
+  "config.sprint-particles.value.GreenDust": "GreenDust - Shiny green dust.",
+  "config.sprint-particles.value.Circular": "Circular - Circular flat smoke trails.",
+  "config.sprint-particles.value.Leaves": "Leaves - Trail of leaves.",
+  "config.sprint-particles.value.Fire1": "Fire1 - Small flames.",
+  "config.sprint-particles.value.Fire2": "Fire2 - Another small flames.",
+  "config.sprint-particles.value.BlueFire": "BlueFire - Fire! But blue.",
+  "config.sprint-particles.value.Stars": "Stars - Sparkle with magical stars as you run.",
+  "config.sprint-particles.value.Water Splash": "Water Splash - Create a splash effect, great for the beach.",
+  "config.sprint-particles.value.Poison": "Poison - Ew.",
+  "config.sprint-particles.value.None": "None - No visual effect will be shown.",
+
+  // Path Speed Bonus Settings
+  "config.path-speed.title": "Path Speed Bonus",
+  "config.path-speed-enable.name": "Enable Path Speed Bonus",
+  "config.path-speed-enable.tooltip": "If enabled, sprinting on crafted paths and roads will be faster.",
+  "config.path-speed-multiplier.name": "Path Speed Bonus Multiplier",
+  "config.path-speed-multiplier.tooltip": "The speed multiplier to apply when sprinting on a path (e.g., 1.15 for a 15% bonus).",
+
+  // Sit Settings
+  "config.sit.title": "Sit Settings",
+  "config.enable-sit.name": "Enable Sit on Ground",
+  "config.enable-sit.tooltip": "If enabled, press the Sit Key to sit on the ground and regenerate stamina.",
+  "config.sit-key.name": "Sit Key",
+  "config.sit-key.tooltip": "The key to press to sit on the ground or cycle poses.",
+  "config.sit-regen-delay.name": "Regen Delay (Seconds)",
+  "config.sit-regen-delay.tooltip": "How long you must sit before stamina regeneration begins.",
+  "config.ground-regen-rate.name": "Ground Regen Rate",
+  "config.ground-regen-rate.tooltip": "How much stamina you regenerate per second while sitting on the ground.",
+  "config.chair-regen-rate.name": "Chair Regen Rate",
+  "config.chair-regen-rate.tooltip": "How much stamina you regenerate per second while sitting in a chair.",
+  "config.social-sitting.name": "Social Sitting",
+  "config.social-sitting.tooltip": "If enabled, sitting near NPCs or your pet will slowly increase friendship.",
+  "config.warming-by-fire.name": "Warming by Fire",
+  "config.warming-by-fire.tooltip": "If enabled, sitting near a fire source provides a temporary 'Warmed' buff.",
+  "config.meditate-for-buff.name": "Meditate for Buff",
+  "config.meditate-for-buff.tooltip": "If enabled, sitting still for 60 seconds grants a temporary 'Focused' luck buff.",
+  "config.idle-sit-effects.name": "Idle Sit Effects",
+  "config.idle-sit-effects.tooltip": "If enabled, your farmer will show idle emotes and particles after sitting for a while.",
+
+  /*********
+  ** In-Game Messages
+  *********/
+  "hud.social-sitting.npc": "{{npcName}} appreciated your company.",
+  "hud.social-sitting.pet": "{{petName}} appreciated your company.",
+  "hud.warmed-buff": "You're all warmed up!",
+  "hud.meditate-buff": "You feel focused...",
+
+  /*********
+  ** Buffs
+  *********/
+  "buff.warmed.name": "Warmed",
+  "buff.warmed.description": "+20 Max Stamina.\n+1 Speed.",
+  "buff.focused.name": "Focused",
+  "buff.focused.description": "A moment of calm has sharpened your senses."
+}

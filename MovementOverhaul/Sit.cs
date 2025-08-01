@@ -271,7 +271,7 @@ namespace MovementOverhaul
                     {
                         Game1.player.changeFriendship(5, npc);
                         npc.doEmote(32);
-                        Game1.addHUDMessage(new HUDMessage($"{npc.displayName} appreciated your company.", 4));
+                        Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.social-sitting.npc", new { npcName = npc.displayName }), 4));
                     }
                 }
 
@@ -280,7 +280,7 @@ namespace MovementOverhaul
                 {
                     pet.friendshipTowardFarmer.Value = Math.Min(1000, pet.friendshipTowardFarmer.Value + 6);
                     pet.doEmote(20);
-                    Game1.addHUDMessage(new HUDMessage($"{pet.displayName} appreciated your company.", 4));
+                    Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.social-sitting.pet", new { petName = pet.displayName }), 4));
                 }
             }
         }
@@ -313,8 +313,8 @@ namespace MovementOverhaul
                 {
                     Buff warmedBuff = new Buff(
                         id: buffId,
-                        displayName: "Warmed",
-                        description: "Sitting by the fire warmed you up!\n+20 Max Stamina.\n+1 Speed.",
+                        displayName: this.Helper.Translation.Get("buff.warmed.name"),
+                        description: this.Helper.Translation.Get("buff.warmed.description"),
                         duration: 3 * 60 * 1000,
                         effects: new BuffEffects()
                         {
@@ -323,7 +323,7 @@ namespace MovementOverhaul
                         }
                     );
                     Game1.player.buffs.Apply(warmedBuff);
-                    Game1.addHUDMessage(new HUDMessage("You're all warmed up!", 4));
+                    Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.warmed-buff"), 4));
                 }
             }
         }
@@ -341,13 +341,13 @@ namespace MovementOverhaul
                 {
                     Buff focusedBuff = new Buff(
                         id: buffId,
-                        displayName: "Focused",
-                        description: "A moment of calm has sharpened your senses.",
+                        displayName: this.Helper.Translation.Get("buff.focused.name"),
+                        description: this.Helper.Translation.Get("buff.focused.description"),
                         duration: 6 * 60 * 1000,
                         effects: new BuffEffects() { LuckLevel = { Value = 2 } }
                     );
                     Game1.player.buffs.Apply(focusedBuff);
-                    Game1.addHUDMessage(new HUDMessage("You've meditated for while now...", 4));
+                    Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.meditate-buff"), 4));
                 }
             }
         }

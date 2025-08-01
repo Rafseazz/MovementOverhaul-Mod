@@ -252,11 +252,23 @@ namespace MovementOverhaul
 
         public float GetSpeedMultiplier()
         {
-            if (!ModEntry.Config.EnableSprint || !this.isSprinting) return 1f;
+            if (!ModEntry.Config.EnableSprint || !this.isSprinting)
+                return 1f;
 
-            return Game1.player.isRidingHorse()
+            float multiplier = Game1.player.isRidingHorse()
                 ? ModEntry.Config.HorseSprintSpeedMultiplier
                 : ModEntry.Config.SprintSpeedMultiplier;
+
+            if (ModEntry.Config.PathSpeedBonus && Game1.player.isMoving())
+            {
+                string tileType = Game1.currentLocation.doesTileHaveProperty((int)Game1.player.Tile.X, (int)Game1.player.Tile.Y, "Type", "Back");
+                if (tileType is "Wood" or "Stone")
+                {
+                    multiplier *= ModEntry.Config.PathSpeedBonusMultiplier;
+                }
+            }
+
+            return multiplier;
         }
 
         public void CreateRemoteParticle(long playerID, string particleType)

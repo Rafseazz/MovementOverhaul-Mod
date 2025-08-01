@@ -128,6 +128,14 @@ namespace MovementOverhaul
 
         private void StartJump(Farmer player, Vector2? landingTile = null)
         {
+            if (ModEntry.Config.JumpStaminaCost > 0)
+            {
+                if (player.stamina < ModEntry.Config.JumpStaminaCost)
+                    return;
+
+                player.stamina -= ModEntry.Config.JumpStaminaCost;
+            }
+
             this.isHorseJump = player.isRidingHorse() && player.mount != null;
             if (this.isHorseJump)
             {
