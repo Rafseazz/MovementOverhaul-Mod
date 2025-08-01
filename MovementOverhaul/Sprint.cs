@@ -1,6 +1,4 @@
-﻿// MovementOverhaul/Sprint.cs
-
-using System;
+﻿using System;
 using System.Linq;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
@@ -18,12 +16,16 @@ namespace MovementOverhaul
 
         private bool isSprinting = false;
 
-        // State for DoubleTap mode
+        // State for Keyboard DoubleTap
         private SButton lastMoveKeyPressed = SButton.None;
         private uint lastKeyPressTime = 0;
         private int tapCount = 0;
         private float sprintTimer = 0f;
         private const uint TapTimeThreshold = 300;
+
+        // State for Controller DoubleTap
+        private int lastControllerDirection = -1;
+        private uint lastControllerFlickTime = 0;
 
         // State for Toggle mode
         private bool isToggleSprintOn = false;
@@ -52,21 +54,20 @@ namespace MovementOverhaul
             switch (ModEntry.Config.SprintActivation)
             {
                 case SprintMode.DoubleTap:
-                    this.HandleDoubleTap(e.Button);
+                    this.HandleKeyboardDoubleTap(e.Button);
                     break;
                 case SprintMode.Toggle:
                     if (e.Button == ModEntry.Config.SprintKey)
                     {
                         this.isToggleSprintOn = !this.isToggleSprintOn;
-                        if (this.isToggleSprintOn) Game1.playSound("hoeHit");
-                        else Game1.playSound("woodyStep");
+                        if (this.isToggleSprintOn) this.ActivateSprint();
+                        else this.StopSprint();
                     }
                     break;
-                    // NOTE: Hold mode is handled entirely in OnUpdateTicked, so this method does nothing for it.
             }
         }
 
-        private void HandleDoubleTap(SButton button)
+        private void HandleKeyboardDoubleTap(SButton button)
         {
             if (!this.IsMovementKey(button) || !Context.CanPlayerMove || Game1.player.stamina <= 1)
                 return;
@@ -85,13 +86,46 @@ namespace MovementOverhaul
                 this.ActivateSprint();
         }
 
+        private void HandleControllerDoubleTap()
+        {
+            if (!Game1.options.gamepadControls)
+                return;
+
+            if (!Context.IsPlayerFree || !Game1.player.movementDirections.Any())
+            {
+                if ((uint)Game1.currentGameTime.TotalGameTime.TotalMilliseconds - this.lastControllerFlickTime > TapTimeThreshold)
+                {
+                    this.lastControllerDirection = -1;
+                }
+                return;
+            }
+
+            int currentDirection = Game1.player.movementDirections[0];
+            uint currentTime = (uint)Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
+
+            if (currentDirection != -1 && currentDirection == this.lastControllerDirection && currentTime - this.lastControllerFlickTime < TapTimeThreshold)
+            {
+                if (!this.isSprinting) this.ActivateSprint();
+                this.lastControllerDirection = -1;
+            }
+
+            if (currentDirection != -1)
+                this.lastControllerFlickTime = currentTime;
+
+            this.lastControllerDirection = currentDirection;
+        }
+
         public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
             if (!ModEntry.Config.EnableSprint)
             {
-                // Failsafe??
                 if (this.isSprinting) this.StopSprint();
                 return;
+            }
+
+            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
+            {
+                this.HandleControllerDoubleTap();
             }
 
             if (!Context.CanPlayerMove)
@@ -100,18 +134,23 @@ namespace MovementOverhaul
                 return;
             }
 
-            bool shouldBeSprinting = false;
-            switch (ModEntry.Config.SprintActivation)
+            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
             {
-                case SprintMode.Hold:
-                    shouldBeSprinting = this.Helper.Input.IsDown(ModEntry.Config.SprintKey);
-                    break;
-                case SprintMode.Toggle:
-                    shouldBeSprinting = this.isToggleSprintOn;
-                    break;
-                case SprintMode.DoubleTap:
-                    shouldBeSprinting = this.isSprinting;
-                    break;
+                if (this.isSprinting)
+                {
+                    this.HandleActiveSprint((float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds);
+                }
+                return;
+            }
+
+            bool shouldBeSprinting = false;
+            if (ModEntry.Config.SprintActivation == SprintMode.Hold)
+            {
+                shouldBeSprinting = this.Helper.Input.IsDown(ModEntry.Config.SprintKey);
+            }
+            else if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+            {
+                shouldBeSprinting = this.isToggleSprintOn;
             }
 
             if (shouldBeSprinting && !this.isSprinting) this.ActivateSprint();
@@ -143,7 +182,6 @@ namespace MovementOverhaul
 
             if (Game1.player.isMoving())
             {
-                // Stamina Drain
                 this.staminaDrainTimer -= elapsedSeconds;
                 if (this.staminaDrainTimer <= 0)
                 {
@@ -152,7 +190,6 @@ namespace MovementOverhaul
                     Game1.player.stamina = Math.Max(0, Game1.player.stamina - cost);
                 }
 
-                // Particle Effects
                 this.particleEffectTimer -= elapsedSeconds;
                 if (this.particleEffectTimer <= 0)
                 {
@@ -164,7 +201,6 @@ namespace MovementOverhaul
                     }
                 }
 
-                // Horse Sound Effects
                 if (Game1.player.isRidingHorse())
                 {
                     this.horseSoundTimer -= elapsedSeconds;
@@ -179,7 +215,12 @@ namespace MovementOverhaul
 
         private void ActivateSprint()
         {
-            if (Game1.player.stamina <= 1) return;
+            if (Game1.player.stamina <= 1)
+            {
+                if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+                    this.isToggleSprintOn = false;
+                return;
+            }
 
             this.isSprinting = true;
             this.staminaDrainTimer = 0.5f;
@@ -196,15 +237,23 @@ namespace MovementOverhaul
         {
             this.isSprinting = false;
             this.tapCount = 0;
+            this.lastControllerDirection = -1;
+
             if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+            {
                 this.isToggleSprintOn = false;
+                Game1.playSound("woodyStep");
+            }
+            else
+            {
+                Game1.playSound("woodyStep");
+            }
         }
 
         public float GetSpeedMultiplier()
         {
-            if (!ModEntry.Config.EnableSprint) return 1f;
+            if (!ModEntry.Config.EnableSprint || !this.isSprinting) return 1f;
 
-            if (!this.isSprinting) return 1f;
             return Game1.player.isRidingHorse()
                 ? ModEntry.Config.HorseSprintSpeedMultiplier
                 : ModEntry.Config.SprintSpeedMultiplier;
@@ -239,7 +288,7 @@ namespace MovementOverhaul
             }
         }
 
-        private TemporaryAnimatedSprite? GetSpriteForType(string particleType, Vector2 position)
+        public static TemporaryAnimatedSprite? GetSpriteForType(string particleType, Vector2 position)
         {
             switch (particleType)
             {

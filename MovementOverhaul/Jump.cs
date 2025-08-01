@@ -24,7 +24,7 @@ namespace MovementOverhaul
         private readonly IMultiplayerHelper Multiplayer;
         private readonly IManifest ModManifest;
         private bool isHorseJump = false;
-        private bool isChargingJump = false;
+        public bool IsChargingJump { get; private set; } = false;
         private float jumpChargeTimer = 0f;
         private const float MAX_JUMP_CHARGE_SECONDS = 0.75f;
 
@@ -49,16 +49,16 @@ namespace MovementOverhaul
             if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Context.CanPlayerMove || this.currentState != JumpState.Idle)
                 return;
 
-            this.isChargingJump = true;
+            this.IsChargingJump = true;
             this.jumpChargeTimer = 0f;
         }
 
         public void OnButtonReleased_Jump(object? sender, ButtonReleasedEventArgs e)
         {
-            if (!this.isChargingJump || e.Button != ModEntry.Config.JumpKey)
+            if (!this.IsChargingJump || e.Button != ModEntry.Config.JumpKey)
                 return;
 
-            this.isChargingJump = false;
+            this.IsChargingJump = false;
 
             Farmer player = Game1.player;
             Character jumper = player.isRidingHorse() ? player.mount : player;
@@ -116,12 +116,12 @@ namespace MovementOverhaul
                 return;
             }
 
-            if (this.isChargingJump)
+            if (this.IsChargingJump)
             {
                 this.jumpChargeTimer += (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
                 if (!this.Helper.Input.IsDown(ModEntry.Config.JumpKey))
                 {
-                    this.isChargingJump = false;
+                    this.IsChargingJump = false;
                 }
             }
         }

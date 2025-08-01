@@ -37,6 +37,27 @@ namespace MovementOverhaul
             this.ParticleType = particleType;
         }
     }
+
+    public class SitStateMessage
+    {
+        public long PlayerID { get; set; }
+        public int Frame { get; set; }
+        public int Direction { get; set; }
+        public bool IsFlipped { get; set; }
+        public int YOffset { get; set; }
+        public bool IsSitting { get; set; }
+
+        public SitStateMessage() { }
+        public SitStateMessage(long id, bool isSitting, int frame, int direction, bool isFlipped, int yOffset)
+        {
+            this.PlayerID = id;
+            this.IsSitting = isSitting;
+            this.Frame = frame;
+            this.Direction = direction;
+            this.IsFlipped = isFlipped;
+            this.YOffset = yOffset;
+        }
+    }
     public enum SprintMode { DoubleTap, Hold, Toggle }
     public class ModConfig
     {
@@ -63,6 +84,15 @@ namespace MovementOverhaul
         public float SprintDurationSeconds { get; set; } = 1f;
         public float SprintStaminaCostPerSecond { get; set; } = 5f;
         public string SprintParticleEffect { get; set; } = "Smoke";
+        public bool EnableSit { get; set; } = true;
+        public SButton SitKey { get; set; } = SButton.OemPeriod;
+        public float SitRegenDelaySeconds { get; set; } = 1.5f;
+        public float SitGroundRegenPerSecond { get; set; } = 3f;
+        public float SitChairRegenPerSecond { get; set; } = 5f;
+        public bool SocialSittingFriendship { get; set; } = true;
+        public bool FireSittingBuff { get; set; } = true;
+        public bool MeditateForBuff { get; set; } = false;
+        public bool IdleSitEffects { get; set; } = false;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -77,6 +107,7 @@ namespace MovementOverhaul
 
         public static SprintLogic SprintLogic { get; private set; } = null!;
         public static JumpLogic JumpLogic { get; private set; } = null!;
+        public static SitLogic SitLogic { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
@@ -84,6 +115,7 @@ namespace MovementOverhaul
 
             SprintLogic = new SprintLogic(helper, helper.Multiplayer, this.ModManifest);
             JumpLogic = new JumpLogic(helper, helper.Multiplayer, this.ModManifest);
+            SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -91,6 +123,9 @@ namespace MovementOverhaul
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
 
             this.HookUpJumpEvents();
+
+            helper.Events.Input.ButtonPressed += SitLogic.OnButtonPressed;
+            helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
 
             helper.Events.GameLoop.UpdateTicked += JumpLogic.OnUpdateTicked;
 
@@ -143,6 +178,30 @@ namespace MovementOverhaul
             {
                 var msg = e.ReadAs<SprintParticleMessage>();
                 SprintLogic.CreateRemoteParticle(msg.PlayerID, msg.ParticleType);
+            }
+            else if (e.Type == "SitStateChanged")
+            {
+                var msg = e.ReadAs<SitStateMessage>();
+                Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
+                if (farmer != null)
+                {
+                    if (msg.IsSitting)
+                    {
+                        farmer.canMove = false;
+                        farmer.completelyStopAnimatingOrDoingAction();
+                        farmer.faceDirection(msg.Direction);
+                        farmer.FarmerSprite.setCurrentFrame(msg.Frame);
+                        farmer.flip = msg.IsFlipped;
+                        farmer.yJumpOffset = msg.YOffset;
+                    }
+                    else
+                    {
+                        farmer.canMove = true;
+                        farmer.FarmerSprite.StopAnimation();
+                        farmer.flip = false;
+                        farmer.yJumpOffset = 0;
+                    }
+                }
             }
         }
 
@@ -217,6 +276,8 @@ namespace MovementOverhaul
                 setValue: value => Config.HopOverAnything = value
             );
 
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sprint Settings");
+
             configMenu.AddBoolOption(mod: this.ModManifest,
                 name: () => "Enable Sprint",
                 tooltip: () => "Toggles the sprint ability on or off.",
@@ -224,7 +285,6 @@ namespace MovementOverhaul
                 setValue: value => Config.EnableSprint = value
             );
 
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sprint Settings");
             configMenu.AddTextOption(mod: this.ModManifest,
                 name: () => "Sprint Activation",
                 tooltip: () => "How sprinting is activated.",
@@ -267,6 +327,23 @@ namespace MovementOverhaul
                     _ => value
                 }
             );
+
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Sit Settings");
+
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Sit on Ground", tooltip: () => "If enabled, double-press the Sit Key to sit on the ground and regenerate stamina.", getValue: () => Config.EnableSit, setValue: value => Config.EnableSit = value);
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => "Sit Key", tooltip: () => "The key to double-press to sit on the ground.", getValue: () => Config.SitKey, setValue: value => Config.SitKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Regen Delay (Seconds)", tooltip: () => "How long you must sit before stamina regeneration begins.", min: 0f, max: 5f, interval: 0.5f, getValue: () => Config.SitRegenDelaySeconds, setValue: value => Config.SitRegenDelaySeconds = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Ground Regen Rate", tooltip: () => "How much stamina you regenerate per second while sitting on the ground.", min: 1f, max: 10f, interval: 0.5f, getValue: () => Config.SitGroundRegenPerSecond, setValue: value => Config.SitGroundRegenPerSecond = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Chair Regen Rate", tooltip: () => "How much stamina you regenerate per second while sitting in a chair.", min: 1f, max: 15f, interval: 0.5f, getValue: () => Config.SitChairRegenPerSecond, setValue: value => Config.SitChairRegenPerSecond = value);
+
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Social Sitting", tooltip: () => "If enabled, sitting near NPCs or your pet for 15 seconds will slowly increase friendship.", getValue: () => Config.SocialSittingFriendship, setValue: value => Config.SocialSittingFriendship = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Warming by Fire", tooltip: () => "If enabled, sitting near a fire source provides a temporary 'Warmed' buff.", getValue: () => Config.FireSittingBuff, setValue: value => Config.FireSittingBuff = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Meditate for Buff", tooltip: () => "If enabled, sitting still for 60 seconds grants a temporary 'Focused' luck buff.", getValue: () => Config.MeditateForBuff, setValue: value => Config.MeditateForBuff = value);
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Idle Sit Effects",
+                tooltip: () => "If enabled, your farmer will show idle emotes and particles after sitting for a while.",
+                getValue: () => Config.IdleSitEffects,
+                setValue: value => Config.IdleSitEffects = value);
         }
     }
 }
