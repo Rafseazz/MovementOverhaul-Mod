@@ -24,6 +24,8 @@ namespace MovementOverhaul
         private float sitRegenDelayTimer = 0f;
         private float regenTickTimer = 0f;
 
+        public bool IsSittingOnGround => this.isSittingOnGround;
+
         private struct Pose
         {
             public int Frame;
@@ -47,8 +49,6 @@ namespace MovementOverhaul
             new Pose(5, 2),
             new Pose(54, 2),
             new Pose(55, 2),
-            new Pose(58, 1),
-            new Pose(58, 3, true),
             new Pose(62, 0),
             new Pose(70, 2),
             new Pose(69, 2, false, 16)
@@ -127,6 +127,15 @@ namespace MovementOverhaul
 
             if (this.isSittingOnGround)
             {
+                if (Game1.player.movementDirections.Any())
+                {
+                    this.StopSittingOnGround();
+                    return;
+                }
+
+                Game1.player.completelyStopAnimatingOrDoingAction();
+                Game1.player.canMove = false;
+
                 if (this.currentPoseIndex > -1 && this.currentPoseIndex < this._poses.Count)
                 {
                     Pose currentPose = this._poses[this.currentPoseIndex];

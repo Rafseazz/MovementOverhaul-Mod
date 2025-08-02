@@ -102,6 +102,7 @@ namespace MovementOverhaul
 
     public class ModEntry : Mod
     {
+        public static IMonitor SMonitor { get; private set; } = null!;
         public static ModConfig Config { get; private set; } = null!;
         public static bool IsHorseJumping { get; set; } = false;
         public static int CurrentHorseJumpYOffset { get; set; } = 0;
@@ -114,6 +115,7 @@ namespace MovementOverhaul
 
         public override void Entry(IModHelper helper)
         {
+            SMonitor = this.Monitor;
             Config = this.Helper.ReadConfig<ModConfig>();
 
             SprintLogic = new SprintLogic(helper, helper.Multiplayer, this.ModManifest);
