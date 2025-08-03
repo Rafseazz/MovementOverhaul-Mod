@@ -14,7 +14,7 @@ namespace MovementOverhaul
         private readonly IMultiplayerHelper Multiplayer;
         private readonly IManifest ModManifest;
 
-        private bool isSprinting = false;
+        public bool IsSprinting { get; private set; } = false;
 
         // State for Keyboard DoubleTap
         private SButton lastMoveKeyPressed = SButton.None;
@@ -82,7 +82,7 @@ namespace MovementOverhaul
             this.lastMoveKeyPressed = button;
             this.lastKeyPressTime = currentTime;
 
-            if (this.tapCount == 2 && !this.isSprinting)
+            if (this.tapCount == 2 && !this.IsSprinting)
                 this.ActivateSprint();
         }
 
@@ -105,7 +105,7 @@ namespace MovementOverhaul
 
             if (currentDirection != -1 && currentDirection == this.lastControllerDirection && currentTime - this.lastControllerFlickTime < TapTimeThreshold)
             {
-                if (!this.isSprinting) this.ActivateSprint();
+                if (!this.IsSprinting) this.ActivateSprint();
                 this.lastControllerDirection = -1;
             }
 
@@ -119,7 +119,7 @@ namespace MovementOverhaul
         {
             if (!ModEntry.Config.EnableSprint)
             {
-                if (this.isSprinting) this.StopSprint();
+                if (this.IsSprinting) this.StopSprint();
                 return;
             }
 
@@ -130,13 +130,13 @@ namespace MovementOverhaul
 
             if (!Context.CanPlayerMove)
             {
-                if (this.isSprinting) this.StopSprint();
+                if (this.IsSprinting) this.StopSprint();
                 return;
             }
 
             if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
             {
-                if (this.isSprinting)
+                if (this.IsSprinting)
                 {
                     this.HandleActiveSprint((float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds);
                 }
@@ -153,10 +153,10 @@ namespace MovementOverhaul
                 shouldBeSprinting = this.isToggleSprintOn;
             }
 
-            if (shouldBeSprinting && !this.isSprinting) this.ActivateSprint();
-            else if (!shouldBeSprinting && this.isSprinting) this.StopSprint();
+            if (shouldBeSprinting && !this.IsSprinting) this.ActivateSprint();
+            else if (!shouldBeSprinting && this.IsSprinting) this.StopSprint();
 
-            if (this.isSprinting)
+            if (this.IsSprinting)
             {
                 this.HandleActiveSprint((float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds);
             }
@@ -207,7 +207,7 @@ namespace MovementOverhaul
                     if (this.horseSoundTimer <= 0f)
                     {
                         this.horseSoundTimer = 0.45f;
-                        Game1.playSound("horse_fluffy_step");
+                        Game1.playSound("sandyStep");
                     }
                 }
             }
@@ -222,7 +222,7 @@ namespace MovementOverhaul
                 return;
             }
 
-            this.isSprinting = true;
+            this.IsSprinting = true;
             this.staminaDrainTimer = 0.5f;
 
             if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
@@ -235,7 +235,7 @@ namespace MovementOverhaul
 
         private void StopSprint()
         {
-            this.isSprinting = false;
+            this.IsSprinting = false;
             this.tapCount = 0;
             this.lastControllerDirection = -1;
 
@@ -252,7 +252,7 @@ namespace MovementOverhaul
 
         public float GetSpeedMultiplier()
         {
-            if (!ModEntry.Config.EnableSprint || !this.isSprinting)
+            if (!ModEntry.Config.EnableSprint || !this.IsSprinting)
                 return 1f;
 
             float multiplier = Game1.player.isRidingHorse()

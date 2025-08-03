@@ -1,7 +1,5 @@
 ﻿{
-  /*********
-  ** Config Menu
-  *********/
+  // == Config Menu ==
   // Jump Settings
   "config.jump.title": "Jump Settings",
   "config.instant-jump.name": "Instant Jump on Press",
@@ -43,6 +41,8 @@
   "config.jump-over-logs.tooltip": "If enabled, allows you to jump over large logs.",
   "config.jump-over-boulders.name": "Jump Over Boulders",
   "config.jump-over-boulders.tooltip": "If enabled, allows you to jump over boulders.",
+  "config.jump-over-trashcans.name": "Jump Over Trash Cans",
+  "config.jump-over-trashcans.tooltip": "If enabled, allows you to jump over trash cans.",
   "config.rider-bounce.name": "Rider Bounce Factor",
   "config.rider-bounce.tooltip": "How much the rider moves in the saddle during a horse jump. 1.0 = glued to saddle, 0.0 = max bounce.",
 
@@ -104,17 +104,25 @@
   "config.idle-sit-effects.name": "Idle Sit Effects",
   "config.idle-sit-effects.tooltip": "If enabled, your farmer will show idle emotes and particles after sitting for a while.",
 
-  /*********
-  ** In-Game Messages
-  *********/
+  // Walk & Stand Settings
+  "config.walkstand.title": "Walking & Standing Settings",
+  "config.enable-walk.name": "Regenerate Stamina While Walking",
+  "config.enable-walk.tooltip": "If enabled, you will slowly regenerate stamina while walking.",
+  "config.walking-regen.name": "Walking Regen Rate",
+  "config.walking-regen.tooltip": "How much stamina you regenerate per second while walking.",
+  "config.enable-stand.name": "Regenerate Stamina While Standing",
+  "config.enable-stand.tooltip": "If enabled, you will slowly regenerate stamina while standing.",
+  "config.standing-regen.name": "Standing Regen Rate",
+  "config.standing-regen.tooltip": "How much stamina you regenerate per second while standing.",
+
+
+  // == In-Game Messages ==
   "hud.social-sitting.npc": "{{npcName}} appreciated your company.",
   "hud.social-sitting.pet": "{{petName}} appreciated your company.",
   "hud.warmed-buff": "You're all warmed up!",
   "hud.meditate-buff": "You feel focused...",
 
-  /*********
-  ** Buffs
-  *********/
+  // == Buffs ==
   "buff.warmed.name": "Warmed",
   "buff.warmed.description": "+20 Max Stamina.\n+1 Speed.",
   "buff.focused.name": "Focused",

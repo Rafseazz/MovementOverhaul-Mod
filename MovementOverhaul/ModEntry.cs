@@ -71,10 +71,11 @@ namespace MovementOverhaul
         public float JumpDistanceScaleFactor { get; set; } = 0.4f;
         public string JumpSound { get; set; } = "dwoop";
         public bool AmplifyJumpSound { get; set; } = false;
-        public float JumpStaminaCost { get; set; } = 1f;
+        public float JumpStaminaCost { get; set; } = 0f;
         public bool JumpOverLargeStumps { get; set; } = false;
         public bool JumpOverLargeLogs { get; set; } = false;
         public bool JumpOverBoulders { get; set; } = false;
+        public bool JumpOverTrashCans { get; set; } = true;
         public float HorseJumpPlayerBounce { get; set; } = 0.55f;
         public bool HopOverAnything { get; set; } = false;
         public bool EnableSprint { get; set; } = true;
@@ -90,12 +91,16 @@ namespace MovementOverhaul
         public bool EnableSit { get; set; } = true;
         public SButton SitKey { get; set; } = SButton.OemPeriod;
         public float SitRegenDelaySeconds { get; set; } = 1.5f;
-        public float SitGroundRegenPerSecond { get; set; } = 3f;
-        public float SitChairRegenPerSecond { get; set; } = 5f;
+        public float SitGroundRegenPerSecond { get; set; } = 5f;
+        public float SitChairRegenPerSecond { get; set; } = 8f;
         public bool SocialSittingFriendship { get; set; } = true;
         public bool FireSittingBuff { get; set; } = true;
         public bool MeditateForBuff { get; set; } = false;
         public bool IdleSitEffects { get; set; } = false;
+        public bool RegenStaminaOnWalk { get; set; } = false;
+        public float WalkRegenPerSecond { get; set; } = 1f;
+        public bool RegenStaminaOnStand { get; set; } = false;
+        public float StandRegenPerSecond { get; set; } = 2f;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -112,6 +117,7 @@ namespace MovementOverhaul
         public static SprintLogic SprintLogic { get; private set; } = null!;
         public static JumpLogic JumpLogic { get; private set; } = null!;
         public static SitLogic SitLogic { get; private set; } = null!;
+        public static WalkStandLogic WalkStandLogic { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
@@ -121,6 +127,7 @@ namespace MovementOverhaul
             SprintLogic = new SprintLogic(helper, helper.Multiplayer, this.ModManifest);
             JumpLogic = new JumpLogic(helper, helper.Multiplayer, this.ModManifest);
             SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
+            WalkStandLogic = new WalkStandLogic(helper);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -131,8 +138,8 @@ namespace MovementOverhaul
 
             helper.Events.Input.ButtonPressed += SitLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
-
             helper.Events.GameLoop.UpdateTicked += JumpLogic.OnUpdateTicked;
+            helper.Events.GameLoop.UpdateTicked += WalkStandLogic.OnUpdateTicked;
 
             helper.Events.Input.ButtonPressed += SprintLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SprintLogic.OnUpdateTicked;
@@ -226,7 +233,7 @@ namespace MovementOverhaul
                 }
             );
 
-            // --- JUMP SETTINGS ---
+            // JUMP SETTINGS
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.jump.title"));
 
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.instant-jump.name"), tooltip: () => this.Helper.Translation.Get("config.instant-jump.tooltip"), getValue: () => Config.InstantJump, setValue: value => Config.InstantJump = value);
@@ -250,6 +257,7 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-stumps.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-stumps.tooltip"), getValue: () => Config.JumpOverLargeStumps, setValue: value => Config.JumpOverLargeStumps = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-logs.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-logs.tooltip"), getValue: () => Config.JumpOverLargeLogs, setValue: value => Config.JumpOverLargeLogs = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-boulders.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-boulders.tooltip"), getValue: () => Config.JumpOverBoulders, setValue: value => Config.JumpOverBoulders = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-trashcans.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-trashcans.tooltip"), getValue: () => Config.JumpOverTrashCans, setValue: value => Config.JumpOverTrashCans = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.rider-bounce.name"), tooltip: () => this.Helper.Translation.Get("config.rider-bounce.tooltip"), getValue: () => Config.HorseJumpPlayerBounce, setValue: value => Config.HorseJumpPlayerBounce = value, min: 0.0f, max: 1.0f, interval: 0.05f);
 
             // SPRINT SETTINGS
@@ -282,6 +290,13 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.warming-by-fire.name"), tooltip: () => this.Helper.Translation.Get("config.warming-by-fire.tooltip"), getValue: () => Config.FireSittingBuff, setValue: value => Config.FireSittingBuff = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.meditate-for-buff.name"), tooltip: () => this.Helper.Translation.Get("config.meditate-for-buff.tooltip"), getValue: () => Config.MeditateForBuff, setValue: value => Config.MeditateForBuff = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.idle-sit-effects.name"), tooltip: () => this.Helper.Translation.Get("config.idle-sit-effects.tooltip"), getValue: () => Config.IdleSitEffects, setValue: value => Config.IdleSitEffects = value);
+
+            // WALK & STAND SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.walkstand.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-walk.name"), tooltip: () => this.Helper.Translation.Get("config.enable-walk.tooltip"), getValue: () => Config.RegenStaminaOnWalk, setValue: value => Config.RegenStaminaOnWalk = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.walking-regen.name"), tooltip: () => this.Helper.Translation.Get("config.walking-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.WalkRegenPerSecond, setValue: value => Config.WalkRegenPerSecond = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-stand.name"), tooltip: () => this.Helper.Translation.Get("config.enable-stand.tooltip"), getValue: () => Config.RegenStaminaOnStand, setValue: value => Config.RegenStaminaOnStand = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.standing-regen.name"), tooltip: () => this.Helper.Translation.Get("config.standing-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.StandRegenPerSecond, setValue: value => Config.StandRegenPerSecond = value);
         }
     }
 }

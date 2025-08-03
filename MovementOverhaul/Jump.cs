@@ -293,6 +293,16 @@ namespace MovementOverhaul
         private bool IsJumpableObjectOnTile(Vector2 tile)
         {
             GameLocation location = Game1.currentLocation;
+            if (ModEntry.Config.JumpOverTrashCans)
+            {
+                string? tileAction = location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Action", "Buildings")
+                                     ?? location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Action", "Back");
+
+                if (tileAction?.StartsWith("Garbage") == true)
+                {
+                    return true;
+                }
+            }
             if (!location.isTilePassable(new Location((int)tile.X, (int)tile.Y), Game1.viewport)) return false;
             if (this.GetCharacterAtTile(location, tile) is NPC) return true;
             if (location.objects.TryGetValue(tile, out StardewValley.Object obj))
@@ -324,6 +334,10 @@ namespace MovementOverhaul
         {
             GameLocation location = Game1.currentLocation;
             if (!location.isTileOnMap(tile)) return true;
+
+            if (this.IsJumpableObjectOnTile(tile))
+                return false;
+
             if (location.getTileIndexAt((int)tile.X, (int)tile.Y, "Buildings") != -1)
             {
                 if (location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Passable", "Buildings") != null)

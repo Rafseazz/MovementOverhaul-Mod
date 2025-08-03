@@ -26,36 +26,8 @@ namespace MovementOverhaul
 
         public bool IsSittingOnGround => this.isSittingOnGround;
 
-        private struct Pose
-        {
-            public int Frame;
-            public int Direction;
-            public bool Flip;
-            public int YOffset;
-
-            public Pose(int frame, int direction = -1, bool flip = false, int yOffset = 0)
-            {
-                this.Frame = frame;
-                this.Direction = direction;
-                this.Flip = flip;
-                this.YOffset = yOffset;
-            }
-        }
-
-        private readonly List<Pose> _poses = new List<Pose>
-        {
-            new Pose(29, 2),
-            new Pose(4, 2),
-            new Pose(5, 2),
-            new Pose(54, 2),
-            new Pose(55, 2),
-            new Pose(62, 0),
-            new Pose(70, 2),
-            new Pose(69, 2, false, 16)
-        };
-
-        private int currentPoseIndex = -1;
-        private int bounceAnimationTimer = 0;
+        private int sittingFrame = -1;
+        private bool sittingIsFlipped = false;
 
         private float socialTimer = 15f;
         private float fireCheckTimer = 5f;
@@ -72,19 +44,23 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
+            if (Game1.player.isRidingHorse())
+                return;
+
+            if (this.isSittingOnGround && e.Button.IsActionButton())
+            {
+                this.StopSittingOnGround();
+            }
+
             if (!ModEntry.Config.EnableSit || !Context.CanPlayerMove || ModEntry.JumpLogic.IsChargingJump)
                 return;
 
             if (e.Button == ModEntry.Config.SitKey)
             {
-                if (!this.isSittingOnGround)
-                {
+                if (this.isSittingOnGround)
+                    this.StopSittingOnGround();
+                else if (Context.CanPlayerMove)
                     this.StartSittingOnGround();
-                }
-                else
-                {
-                    this.CycleToNextPose();
-                }
             }
         }
 
@@ -133,30 +109,9 @@ namespace MovementOverhaul
                     return;
                 }
 
-                Game1.player.completelyStopAnimatingOrDoingAction();
                 Game1.player.canMove = false;
-
-                if (this.currentPoseIndex > -1 && this.currentPoseIndex < this._poses.Count)
-                {
-                    Pose currentPose = this._poses[this.currentPoseIndex];
-                    Game1.player.FarmerSprite.setCurrentFrame(currentPose.Frame);
-
-                    int bounceOffset = 0;
-                    if (this.bounceAnimationTimer > 0)
-                    {
-                        this.bounceAnimationTimer--;
-                        bounceOffset = this.bounceAnimationTimer > 3 ? -4 : 0;
-                    }
-                    Game1.player.yJumpOffset = currentPose.YOffset + bounceOffset;
-                }
-
-                if (this.bounceAnimationTimer > 0) return;
-
-                if (Game1.player.movementDirections.Any())
-                {
-                    this.StopSittingOnGround();
-                    return;
-                }
+                Game1.player.completelyStopAnimatingOrDoingAction();
+                Game1.player.showFrame(this.sittingFrame, this.sittingIsFlipped);
 
                 float elapsedSeconds = (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
                 if (this.sitRegenDelayTimer > 0)
@@ -189,8 +144,30 @@ namespace MovementOverhaul
             Game1.player.canMove = false;
             Game1.player.completelyStopAnimatingOrDoingAction();
 
-            this.currentPoseIndex = -1;
-            this.CycleToNextPose();
+            switch (Game1.player.FacingDirection)
+            {
+                case 0:
+                    this.sittingFrame = 62;
+                    this.sittingIsFlipped = false;
+                    break;
+                case 1:
+                    this.sittingFrame = 58;
+                    this.sittingIsFlipped = false;
+                    break;
+                case 3:
+                    this.sittingFrame = 58;
+                    this.sittingIsFlipped = true;
+                    break;
+                case 2:
+                default:
+                    this.sittingFrame = 29;
+                    this.sittingIsFlipped = false;
+                    break;
+            }
+
+            Game1.playSound("dwoop");
+
+            this.SyncSitState();
 
             this.sitRegenDelayTimer = ModEntry.Config.SitRegenDelaySeconds;
             this.regenTickTimer = 1f;
@@ -200,42 +177,35 @@ namespace MovementOverhaul
             this.particleIdleTimer = 10f;
         }
 
-        private void CycleToNextPose()
-        {
-            this.currentPoseIndex++;
-            if (this.currentPoseIndex >= this._poses.Count)
-            {
-                this.currentPoseIndex = 0;
-            }
-
-            Pose nextPose = this._poses[this.currentPoseIndex];
-
-            Game1.player.flip = nextPose.Flip;
-
-            if (nextPose.Direction != -1)
-            {
-                Game1.player.faceDirection(nextPose.Direction);
-            }
-
-            Game1.player.FarmerSprite.setCurrentFrame(nextPose.Frame);
-            Game1.playSound("dwoop");
-            this.bounceAnimationTimer = 6;
-
-            this.SyncSitState();
-
-            this.meditateTimer = 20f;
-            this.particleIdleTimer = 10f;
-        }
-
         private void StopSittingOnGround()
         {
             this.isSittingOnGround = false;
-            this.currentPoseIndex = -1;
-            this.bounceAnimationTimer = 0;
+            this.sittingFrame = -1;
+            this.sittingIsFlipped = false;
             Game1.player.yJumpOffset = 0;
             Game1.player.flip = false;
             Game1.player.canMove = true;
             Game1.player.FarmerSprite.StopAnimation();
+
+            switch (Game1.player.FacingDirection)
+            {
+                case 0:
+                    Game1.player.flip = false;
+                    Game1.player.FarmerSprite.setCurrentFrame(12);
+                    break;
+                case 1:
+                    Game1.player.flip = false;
+                    Game1.player.FarmerSprite.setCurrentFrame(6);
+                    break;
+                case 2:
+                    Game1.player.flip = false;
+                    Game1.player.FarmerSprite.setCurrentFrame(0);
+                    break;
+                case 3:
+                    Game1.player.flip = true;
+                    Game1.player.FarmerSprite.setCurrentFrame(6);
+                    break;
+            }
 
             this.SyncSitState(isStandingUp: true);
         }
@@ -251,14 +221,13 @@ namespace MovementOverhaul
             }
             else
             {
-                Pose currentPose = this._poses[this.currentPoseIndex];
                 message = new SitStateMessage(
                     id: Game1.player.UniqueMultiplayerID,
                     isSitting: true,
-                    frame: currentPose.Frame,
+                    frame: this.sittingFrame,
                     direction: Game1.player.FacingDirection,
-                    isFlipped: Game1.player.flip,
-                    yOffset: currentPose.YOffset
+                    isFlipped: this.sittingIsFlipped,
+                    yOffset: 0
                 );
             }
 
@@ -378,7 +347,6 @@ namespace MovementOverhaul
                 };
                 Game1.player.doEmote(emote);
 
-                //Game1.currentLocation.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(346, 1971, 12, 11), 200f, 5, 0, Game1.player.getStandingPosition() + new Vector2(-16, -112), false, false, -1, 0, Color.White, 4f, 0, 0, 0));
             }
         }
     }
