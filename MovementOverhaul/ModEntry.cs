@@ -19,11 +19,25 @@ public interface IGenericModConfigMenuApi
 
 namespace MovementOverhaul
 {
-    public class JumpMessage
+    public class FullJumpSyncMessage
     {
         public long PlayerID { get; set; }
-        public JumpMessage() { }
-        public JumpMessage(long playerID) { this.PlayerID = playerID; }
+        public Vector2 StartPosition { get; set; }
+        public Vector2 TargetPosition { get; set; }
+        public float JumpDuration { get; set; }
+        public float JumpHeight { get; set; }
+        public bool IsHorseJump { get; set; }
+
+        public FullJumpSyncMessage() { } // Parameterless constructor for SMAPI
+        public FullJumpSyncMessage(long id, Vector2 start, Vector2 target, float duration, float height, bool isHorse)
+        {
+            this.PlayerID = id;
+            this.StartPosition = start;
+            this.TargetPosition = target;
+            this.JumpDuration = duration;
+            this.JumpHeight = height;
+            this.IsHorseJump = isHorse;
+        }
     }
 
     public class SprintParticleMessage
@@ -139,7 +153,7 @@ namespace MovementOverhaul
 
             helper.Events.Input.ButtonPressed += SitLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
-            helper.Events.GameLoop.UpdateTicked += JumpLogic.OnUpdateTicked;
+            helper.Events.GameLoop.UpdateTicking += JumpLogic.OnUpdateTicking;
             helper.Events.GameLoop.UpdateTicked += WalkStandLogic.OnUpdateTicked;
 
             helper.Events.Input.ButtonPressed += SprintLogic.OnButtonPressed;
@@ -182,10 +196,10 @@ namespace MovementOverhaul
             if (e.FromModID != this.ModManifest.UniqueID || e.FromPlayerID == Game1.player.UniqueMultiplayerID)
                 return;
 
-            if (e.Type == "PlayerJumped")
+            if (e.Type == "FullJumpSync") // For on-foot jumps
             {
-                var msg = e.ReadAs<JumpMessage>();
-                JumpLogic.TriggerRemoteJump(msg.PlayerID);
+                var msg = e.ReadAs<FullJumpSyncMessage>();
+                JumpLogic.StartRemoteJump(msg);
             }
             else if (e.Type == "CreateSprintParticle")
             {
