@@ -75,6 +75,8 @@
   "config.sprint-particles.value.Water Splash": "Water Splash - Create a splash effect, great for the beach.",
   "config.sprint-particles.value.Poison": "Poison - Ew.",
   "config.sprint-particles.value.None": "None - No visual effect will be shown.",
+  "config.horse-sprint-stamina.name": "No Stamina Drain While Mounted",
+  "config.horse-sprint-stamina.tooltip": "If enabled, jumping and sprinting on your horse will not use stamina.",
 
   // Path Speed Bonus Settings
   "config.path-speed.title": "Path Speed Bonus",

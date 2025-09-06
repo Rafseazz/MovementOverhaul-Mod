@@ -77,6 +77,7 @@ namespace MovementOverhaul
         public bool JumpOverBoulders { get; set; } = false;
         public bool JumpOverTrashCans { get; set; } = true;
         public float HorseJumpPlayerBounce { get; set; } = 0.55f;
+        public bool NoStaminaDrainOnHorse { get; set; } = false;
         public bool HopOverAnything { get; set; } = false;
         public bool EnableSprint { get; set; } = true;
         public SprintMode SprintActivation { get; set; } = SprintMode.DoubleTap;
@@ -202,8 +203,7 @@ namespace MovementOverhaul
                         farmer.canMove = false;
                         farmer.completelyStopAnimatingOrDoingAction();
                         farmer.faceDirection(msg.Direction);
-                        farmer.FarmerSprite.setCurrentFrame(msg.Frame);
-                        farmer.flip = msg.IsFlipped;
+                        farmer.showFrame(msg.Frame, msg.IsFlipped);
                         farmer.yJumpOffset = msg.YOffset;
                     }
                     else
@@ -272,6 +272,8 @@ namespace MovementOverhaul
             configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sprint-particles.name"), tooltip: () => this.Helper.Translation.Get("config.sprint-particles.tooltip"), getValue: () => Config.SprintParticleEffect, setValue: value => Config.SprintParticleEffect = value,
                 allowedValues: new string[] { "Smoke", "GreenDust", "Circular", "Leaves", "Fire1", "Fire2", "BlueFire", "Stars", "Water Splash", "Poison", "None" },
                 formatAllowedValue: value => this.Helper.Translation.Get($"config.sprint-particles.value.{value}", new { defaultValue = value })
+            );
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.horse-sprint-stamina.name"), tooltip: () => this.Helper.Translation.Get("config.horse-sprint-stamina.tooltip"), getValue: () => Config.NoStaminaDrainOnHorse, setValue: value => Config.NoStaminaDrainOnHorse = value
             );
 
             // PATH SPEED BONUS

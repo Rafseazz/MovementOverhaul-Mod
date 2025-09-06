@@ -130,10 +130,14 @@ namespace MovementOverhaul
         {
             if (ModEntry.Config.JumpStaminaCost > 0)
             {
-                if (player.stamina < ModEntry.Config.JumpStaminaCost)
-                    return;
-
-                player.stamina -= ModEntry.Config.JumpStaminaCost;
+                // Skip cost if on a horse and the setting is enabled.
+                bool freeJump = this.isHorseJump && ModEntry.Config.NoStaminaDrainOnHorse;
+                if (!freeJump)
+                {
+                    if (player.stamina < ModEntry.Config.JumpStaminaCost)
+                        return;
+                    player.stamina -= ModEntry.Config.JumpStaminaCost;
+                }
             }
 
             this.isHorseJump = player.isRidingHorse() && player.mount != null;
@@ -267,7 +271,15 @@ namespace MovementOverhaul
             Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerID);
             if (farmer != null && !farmer.IsLocalPlayer)
             {
-                farmer.jump();
+                // Check if the remote farmer is on a horse and make the horse jump.
+                if (farmer.isRidingHorse() && farmer.mount != null)
+                {
+                    farmer.mount.jump();
+                }
+                else
+                {
+                    farmer.jump();
+                }
             }
         }
 

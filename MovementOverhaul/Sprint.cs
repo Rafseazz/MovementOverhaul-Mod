@@ -186,8 +186,12 @@ namespace MovementOverhaul
                 if (this.staminaDrainTimer <= 0)
                 {
                     this.staminaDrainTimer = 1f;
-                    float cost = ModEntry.Config.SprintStaminaCostPerSecond;
-                    Game1.player.stamina = Math.Max(0, Game1.player.stamina - cost);
+                    bool freeSprint = Game1.player.isRidingHorse() && ModEntry.Config.NoStaminaDrainOnHorse;
+                    if (!freeSprint)
+                    {
+                        float cost = ModEntry.Config.SprintStaminaCostPerSecond;
+                        Game1.player.stamina = Math.Max(0, Game1.player.stamina - cost);
+                    }
                 }
 
                 this.particleEffectTimer -= elapsedSeconds;
