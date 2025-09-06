@@ -111,6 +111,12 @@ namespace MovementOverhaul
                 jumpDistance = maxJumpDistance;
             }
 
+            // Enforce a minimum distance for all horse jumps (can't do 2.5 huhu)
+            if (player.isRidingHorse())
+            {
+                jumpDistance = Math.Max(3, jumpDistance);
+            }
+
             Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
 
             if (ModEntry.Config.HopOverAnything)
