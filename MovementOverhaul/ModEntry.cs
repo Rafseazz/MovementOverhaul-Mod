@@ -82,7 +82,7 @@ namespace MovementOverhaul
         public float JumpDuration { get; set; } = 30f;
         public float JumpHeight { get; set; } = 36f;
         public float NormalJumpDistance { get; set; } = 1.5f;
-        public float JumpDistanceScaleFactor { get; set; } = 0.4f;
+        public float JumpDistanceScaleFactor { get; set; } = 0.5f;
         public string JumpSound { get; set; } = "dwoop";
         public bool AmplifyJumpSound { get; set; } = false;
         public float JumpStaminaCost { get; set; } = 0f;

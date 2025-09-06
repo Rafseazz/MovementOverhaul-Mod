@@ -57,16 +57,17 @@ namespace MovementOverhaul
 
         public bool OnButtonPressed_Instant(ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Context.CanPlayerMove || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return false;
 
-            this.StartJump(Game1.player);
+            Vector2 landingTile = this.CalculateBestLandingTile();
+            this.StartJump(Game1.player, landingTile);
             return true;
         }
 
         public void OnButtonPressed_Charge(object? sender, ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Context.CanPlayerMove || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return;
 
             this.IsChargingJump = true;
@@ -79,27 +80,45 @@ namespace MovementOverhaul
                 return;
 
             this.IsChargingJump = false;
-            this.PerformJumpLogic();
+            Vector2 landingTile = this.CalculateBestLandingTile();
+            this.StartJump(Game1.player, landingTile);
         }
 
-        private void PerformJumpLogic()
+        private Vector2 CalculateBestLandingTile()
         {
             Farmer player = Game1.player;
             Character jumper = player.isRidingHorse() ? player.mount : player;
-            if (jumper == null) return;
+            if (jumper == null) return player.Tile;
 
-            int jumpDistance = 1;
-            if (player.isMoving())
+            int jumpDistance;
+            int maxJumpDistance = 1;
+
+            if (player.movementDirections.Any())
             {
                 float baseSpeed = 5f;
                 float extraSpeed = player.getMovementSpeed() - baseSpeed;
                 float bonusDistance = (extraSpeed > 0) ? extraSpeed * ModEntry.Config.JumpDistanceScaleFactor : 0;
-                jumpDistance = (int)Math.Round(ModEntry.Config.NormalJumpDistance + bonusDistance);
+                maxJumpDistance = (int)Math.Round(ModEntry.Config.NormalJumpDistance + bonusDistance);
+            }
+
+            if (!ModEntry.Config.InstantJump && ModEntry.Config.ChargeAffectsDistance)
+            {
+                float chargePercent = Math.Min(1f, this.jumpChargeTimer / MAX_JUMP_CHARGE_SECONDS);
+                jumpDistance = (int)Math.Ceiling(1 + (maxJumpDistance - 1) * chargePercent * 1.5f);
+            }
+            else
+            {
+                jumpDistance = maxJumpDistance;
             }
 
             Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
-            Vector2 bestLandingTile = jumper.Tile;
 
+            if (ModEntry.Config.HopOverAnything)
+            {
+                return jumper.Tile + moveDirection * jumpDistance;
+            }
+
+            Vector2 bestLandingTile = jumper.Tile;
             for (int i = 1; i <= jumpDistance; i++)
             {
                 Vector2 currentTile = jumper.Tile + moveDirection * i;
@@ -108,8 +127,7 @@ namespace MovementOverhaul
                 if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
                 else break;
             }
-
-            this.StartJump(player, bestLandingTile);
+            return bestLandingTile;
         }
 
         public void OnUpdateTicking(object? sender, UpdateTickingEventArgs e)
@@ -120,14 +138,14 @@ namespace MovementOverhaul
             }
 
             if (this.IsChargingJump)
-            {   
+            {
                 this.jumpChargeTimer += (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
                 if (!this.Helper.Input.IsDown(ModEntry.Config.JumpKey))
                     this.IsChargingJump = false;
             }
         }
 
-        private void StartJump(Farmer player, Vector2? landingTile = null)
+        private void StartJump(Farmer player, Vector2 landingTile)
         {
             if (this._activeJumps.ContainsKey(player.UniqueMultiplayerID)) return;
 
@@ -135,12 +153,10 @@ namespace MovementOverhaul
 
             if (ModEntry.Config.JumpStaminaCost > 0)
             {
-                // Skip cost if on a horse and the setting is enabled.
                 bool freeJump = isHorseJump && ModEntry.Config.NoStaminaDrainOnHorse;
                 if (!freeJump)
                 {
-                    if (player.stamina < ModEntry.Config.JumpStaminaCost)
-                        return; // Not enough stamina, cancel jump.
+                    if (player.stamina < ModEntry.Config.JumpStaminaCost) return;
                     player.stamina -= ModEntry.Config.JumpStaminaCost;
                 }
             }
@@ -151,44 +167,14 @@ namespace MovementOverhaul
             }
 
             Character jumper = isHorseJump ? player.mount! : player;
-
             Vector2 startPosition = jumper.Position;
-            Vector2 targetPosition;
-
-            if (landingTile.HasValue)
-            {
-                targetPosition = (landingTile.Value == jumper.Tile)
-                    ? jumper.Position
-                    : new Vector2(landingTile.Value.X * 64 + 32, landingTile.Value.Y * 64 + 32) - new Vector2(jumper.GetBoundingBox().Width / 2f, jumper.GetBoundingBox().Height / 2f);
-            }
-            else
-            {
-                int jumpDistance = 1;
-                if (player.isMoving())
-                {
-                    float baseSpeed = 5f;
-                    float extraSpeed = player.getMovementSpeed() - baseSpeed;
-                    float bonusDistance = (extraSpeed > 0) ? extraSpeed * ModEntry.Config.JumpDistanceScaleFactor : 0;
-                    jumpDistance = (int)Math.Round(ModEntry.Config.NormalJumpDistance + bonusDistance);
-                }
-                Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
-                Vector2 bestLandingTile = jumper.Tile;
-                for (int i = 1; i <= jumpDistance; i++)
-                {
-                    Vector2 currentTile = jumper.Tile + moveDirection * i;
-                    if (this.IsSolidWall(currentTile)) break;
-                    if (this.IsJumpableObjectOnTile(currentTile)) continue;
-                    if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
-                    else break;
-                }
-                targetPosition = (bestLandingTile == jumper.Tile)
-                    ? jumper.Position
-                    : new Vector2(bestLandingTile.X * 64 + 32, bestLandingTile.Y * 64 + 32) - new Vector2(jumper.GetBoundingBox().Width / 2f, jumper.GetBoundingBox().Height / 2f);
-            }
+            Vector2 targetPosition = (landingTile == jumper.Tile)
+                ? jumper.Position
+                : new Vector2(landingTile.X * 64 + 32, landingTile.Y * 64 + 32) - new Vector2(jumper.GetBoundingBox().Width / 2f, jumper.GetBoundingBox().Height / 2f);
 
             float baseHeight = ModEntry.Config.JumpHeight;
             if (isHorseJump) baseHeight *= 1.7f;
-            float speedHeightBonus = player.isMoving() ? 1.25f : 1.0f;
+            float speedHeightBonus = player.movementDirections.Any() ? 1.25f : 1.0f;
             float jumpHeight;
 
             if (ModEntry.Config.InstantJump)
@@ -198,7 +184,16 @@ namespace MovementOverhaul
             else
             {
                 float chargePercent = Math.Min(1f, this.jumpChargeTimer / MAX_JUMP_CHARGE_SECONDS);
-                jumpHeight = baseHeight * (0.7f + (1.3f * chargePercent)) * speedHeightBonus;
+                jumpHeight = baseHeight * (0.5f + (1.2f * chargePercent)) * speedHeightBonus;
+            }
+
+            if (!string.IsNullOrEmpty(ModEntry.Config.JumpSound))
+            {
+                Game1.playSound(ModEntry.Config.JumpSound);
+                if (ModEntry.Config.AmplifyJumpSound)
+                {
+                    Game1.playSound(ModEntry.Config.JumpSound);
+                }
             }
 
             var jumpState = new JumpArcState(ModEntry.Config.JumpDuration, jumpHeight, startPosition, targetPosition, isHorseJump, jumper.Sprite.currentFrame);
