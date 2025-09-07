@@ -90,6 +90,7 @@ namespace MovementOverhaul
         public bool JumpOverLargeLogs { get; set; } = false;
         public bool JumpOverBoulders { get; set; } = false;
         public bool JumpOverTrashCans { get; set; } = true;
+        public bool JumpThroughNPCs { get; set; } = true;
         public float HorseJumpPlayerBounce { get; set; } = 0.55f;
         public bool NoStaminaDrainOnHorse { get; set; } = false;
         public bool HopOverAnything { get; set; } = false;
@@ -116,6 +117,7 @@ namespace MovementOverhaul
         public float WalkRegenPerSecond { get; set; } = 1f;
         public bool RegenStaminaOnStand { get; set; } = true;
         public float StandRegenPerSecond { get; set; } = 2f;
+        public float WalkStandRegenDelaySeconds { get; set; } = 1.5f;
         public bool SmootherTurningAnimation { get; set; } = false;
         public bool AdaptiveAnimationSpeed { get; set; } = true;
     }
@@ -303,6 +305,11 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-logs.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-logs.tooltip"), getValue: () => Config.JumpOverLargeLogs, setValue: value => Config.JumpOverLargeLogs = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-boulders.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-boulders.tooltip"), getValue: () => Config.JumpOverBoulders, setValue: value => Config.JumpOverBoulders = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-trashcans.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-trashcans.tooltip"), getValue: () => Config.JumpOverTrashCans, setValue: value => Config.JumpOverTrashCans = value);
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Jump Through NPCs",
+                tooltip: () => "If enabled, your jumps will pass through villagers instead of being blocked or hopping over them.",
+                getValue: () => Config.JumpThroughNPCs,
+                setValue: value => Config.JumpThroughNPCs = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.rider-bounce.name"), tooltip: () => this.Helper.Translation.Get("config.rider-bounce.tooltip"), getValue: () => Config.HorseJumpPlayerBounce, setValue: value => Config.HorseJumpPlayerBounce = value, min: 0.0f, max: 1.0f, interval: 0.05f);
 
             // SPRINT SETTINGS
@@ -344,6 +351,12 @@ namespace MovementOverhaul
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.walking-regen.name"), tooltip: () => this.Helper.Translation.Get("config.walking-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.WalkRegenPerSecond, setValue: value => Config.WalkRegenPerSecond = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-stand.name"), tooltip: () => this.Helper.Translation.Get("config.enable-stand.tooltip"), getValue: () => Config.RegenStaminaOnStand, setValue: value => Config.RegenStaminaOnStand = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.standing-regen.name"), tooltip: () => this.Helper.Translation.Get("config.standing-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.StandRegenPerSecond, setValue: value => Config.StandRegenPerSecond = value);
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Regen Delay (Seconds)",
+                tooltip: () => "How long you must walk/stand still before stamina regeneration begins.",
+                min: 0f, max: 5f, interval: 0.5f,
+                getValue: () => Config.WalkStandRegenDelaySeconds,
+                setValue: value => Config.WalkStandRegenDelaySeconds = value);
 
             // ANIMATION SMOOTHING SETTINGS
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.animation.title"));

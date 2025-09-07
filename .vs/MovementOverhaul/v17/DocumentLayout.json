@@ -7,16 +7,16 @@
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\walkstand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\walkstand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\sit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -58,7 +58,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "default.json",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\i18n\\default.json",
               "RelativeDocumentMoniker": "MovementOverhaul\\i18n\\default.json",
@@ -77,33 +77,33 @@
               "RelativeDocumentMoniker": "MovementOverhaul\\ModEntry.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\ModEntry.cs",
               "RelativeToolTip": "MovementOverhaul\\ModEntry.cs",
-              "ViewState": "AgIAAGoAAAAAAAAAAAA5wHQAAAA9AAAAAAAAAA==",
+              "ViewState": "AgIAAG0AAAAAAAAAAAA8wHIAAAA4AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-29T09:12:17.402Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "Jump.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Jump.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Jump.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Jump.cs",
               "RelativeToolTip": "MovementOverhaul\\Jump.cs",
-              "ViewState": "AgIAAPcAAAAAAAAAAAASwPoAAAAsAAAAAAAAAA==",
+              "ViewState": "AgIAACgBAAAAAAAAAAAUwDABAAAPAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-29T09:12:28.863Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "WalkStand.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\WalkStand.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\WalkStand.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\WalkStand.cs",
               "RelativeToolTip": "MovementOverhaul\\WalkStand.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAUwDAAAAANAAAAAAAAAA==",
+              "ViewState": "AgIAADwAAAAAAAAAAAAYwAkAAAArAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-08-02T12:55:00.127Z",
               "EditorCaption": ""
@@ -118,8 +118,7 @@
               "RelativeToolTip": "MovementOverhaul\\Sit.cs",
               "ViewState": "AgIAAEcBAAAAAAAAAAAIwFYBAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-31T16:23:37.271Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-07-31T16:23:37.271Z"
             },
             {
               "$type": "Document",
@@ -131,8 +130,7 @@
               "RelativeToolTip": "MovementOverhaul\\Sprint.cs",
               "ViewState": "AgIAAK0AAAAAAAAAAAASwLgAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-07-29T09:12:27.463Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-07-29T09:12:27.463Z"
             },
             {
               "$type": "Document",
@@ -144,8 +142,7 @@
               "RelativeToolTip": "MovementOverhaul\\Animation.cs",
               "ViewState": "AgIAAGYAAAAAAAAAAAAcwCcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-07T02:40:12.085Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-07T02:40:12.085Z"
             }
           ]
         }

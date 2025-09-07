@@ -199,6 +199,7 @@ namespace MovementOverhaul
                 if (ModEntry.Config.AmplifyJumpSound)
                 {
                     Game1.playSound(ModEntry.Config.JumpSound);
+                    Game1.playSound(ModEntry.Config.JumpSound);
                 }
             }
 
@@ -206,7 +207,6 @@ namespace MovementOverhaul
             this._activeJumps[player.UniqueMultiplayerID] = jumpState;
 
             player.canMove = false;
-            Game1.playSound(ModEntry.Config.JumpSound);
 
             var message = new FullJumpSyncMessage(player.UniqueMultiplayerID, startPosition, targetPosition, ModEntry.Config.JumpDuration, jumpHeight, isHorseJump);
             this.Multiplayer.SendMessage(message, "FullJumpSync", modIDs: new[] { this.ModManifest.UniqueID });
@@ -241,36 +241,40 @@ namespace MovementOverhaul
 
                 jump.Progress += 1f;
                 float percentDone = jump.Progress / jump.Duration;
-
-                Vector2 newPosition = Vector2.Lerp(jump.StartPos, jump.TargetPos, percentDone);
                 float sinWave = (float)Math.Sin(percentDone * Math.PI);
                 int currentArcOffset = (int)(-sinWave * jump.Height);
 
-                if (farmer.IsLocalPlayer && jump.IsHorseJump)
+                // Logic is split for Local vs. Remote players
+
+                if (farmer.IsLocalPlayer)
                 {
-                    // For the local player's horse jump, we don't move the horse directly.
-                    // Instead, we feed the data to the Harmony patch, which will move both
-                    // the horse and the player to ensure they are perfectly synced.
-                    ModEntry.CurrentBounceFactor = ModEntry.Config.HorseJumpPlayerBounce;
-                    ModEntry.CurrentHorseJumpPosition = newPosition;
-                    ModEntry.CurrentHorseJumpYOffset = currentArcOffset;
-                }
-                else
-                {
-                    // For remote players or on-foot jumps, we move the character directly.
+                    // For the local player, we control everything.
+                    Vector2 newPosition = Vector2.Lerp(jump.StartPos, jump.TargetPos, percentDone);
                     Character jumper = jump.IsHorseJump && farmer.mount != null ? farmer.mount : farmer;
                     jumper.Position = newPosition;
                     jumper.yJumpOffset = currentArcOffset;
 
-                    // If it's a horse jump, also apply the offset to the farmer sprite.
+                    if (jump.IsHorseJump)
+                    {
+                        ModEntry.CurrentBounceFactor = ModEntry.Config.HorseJumpPlayerBounce;
+                        ModEntry.CurrentHorseJumpPosition = newPosition;
+                        ModEntry.CurrentHorseJumpYOffset = currentArcOffset;
+                    }
+                    else if (jumper is Farmer f)
+                    {
+                        f.Sprite.currentFrame = (jump.Progress < jump.Duration / 2) ? 12 : 11;
+                    }
+                }
+                else // For REMOTE players
+                {
+                    // For remote players, we let the game's netcode handle horizontal position.
+                    // We ONLY apply the vertical arc to prevent teleporting.
+                    Character jumper = jump.IsHorseJump && farmer.mount != null ? farmer.mount : farmer;
+                    jumper.yJumpOffset = currentArcOffset;
+
                     if (jump.IsHorseJump)
                     {
                         farmer.yJumpOffset = (int)(currentArcOffset * ModEntry.Config.HorseJumpPlayerBounce);
-                    }
-
-                    if (jumper is Farmer f && !jump.IsHorseJump)
-                    {
-                        f.Sprite.currentFrame = (jump.Progress < jump.Duration / 2) ? 12 : 11;
                     }
                 }
 
@@ -298,8 +302,10 @@ namespace MovementOverhaul
 
             Character jumper = jump.IsHorseJump && farmer.mount != null ? farmer.mount! : farmer;
 
-            // For local horse jumps, the patch has the final position. For others, we set it here.
-            if (!farmer.IsLocalPlayer || !jump.IsHorseJump)
+            // Only forcefully set the final position for the local player's on-foot jumps.
+            // For remote players, we let the game's own netcode handle the final position to prevent teleporting.
+            // For the local horse jump, the Harmony patch handles the final position.
+            if (farmer.IsLocalPlayer && !jump.IsHorseJump)
             {
                 jumper.Position = jump.TargetPos;
             }
@@ -308,6 +314,7 @@ namespace MovementOverhaul
             farmer.yJumpOffset = 0;
             farmer.canMove = true;
             jumper.Sprite.currentFrame = jump.OriginalFrame;
+
         }
 
         private Vector2 SafeGetDirectionVector(Character who)
@@ -343,7 +350,8 @@ namespace MovementOverhaul
                 }
             }
             if (!location.isTilePassable(new Location((int)tile.X, (int)tile.Y), Game1.viewport)) return false;
-            if (this.GetCharacterAtTile(location, tile) is NPC) return true;
+            if (this.GetCharacterAtTile(location, tile) is NPC && !ModEntry.Config.JumpThroughNPCs)
+                return true;
             if (location.objects.TryGetValue(tile, out StardewValley.Object obj))
             {
                 if (obj.CanBeGrabbed) return true;
@@ -410,8 +418,20 @@ namespace MovementOverhaul
             if (location.Objects.ContainsKey(tile))
                 return false;
 
-            if (this.GetCharacterAtTile(location, tile) != null)
-                return false;
+            Character? c = this.GetCharacterAtTile(location, tile);
+            if (c != null)
+            {
+                // If it's an NPC and we can jump through them, the tile is NOT obstructed.
+                if (c is NPC && ModEntry.Config.JumpThroughNPCs)
+                {
+                    // Do nothing and proceed to the final 'return true'.
+                }
+                else
+                {
+                    // It's another player, or an NPC we can't jump through. It's obstructed.
+                    return false;
+                }
+            }
 
             if (location.largeTerrainFeatures.Any(tf => tf.getBoundingBox().Intersects(new Microsoft.Xna.Framework.Rectangle((int)tile.X * 64, (int)tile.Y * 64, 64, 64))))
                 return false;
