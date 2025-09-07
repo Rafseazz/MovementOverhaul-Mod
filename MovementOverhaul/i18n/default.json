@@ -24,6 +24,7 @@
   "config.jump-sound.tooltip": "The sound that plays when you jump.",
   "config.amplify-jump-sound.name": "Amplify Jump Sound",
   "config.amplify-jump-sound.tooltip": "If enabled, plays the jump sound twice to make it louder.",
+  "config.jump-sound.value.pickUpItem": "Bwoop",
   "config.jump-sound.value.dwoop": "Classic Dwoop",
   "config.jump-sound.value.jingle1": "Jingle",
   "config.jump-sound.value.stoneStep": "Stone Step",
@@ -43,6 +44,10 @@
   "config.jump-over-boulders.tooltip": "If enabled, allows you to jump over boulders.",
   "config.jump-over-trashcans.name": "Jump Over Trash Cans",
   "config.jump-over-trashcans.tooltip": "If enabled, allows you to jump over trash cans.",
+  "config.jump-thru-NPCs.name": "Jump Through NPCs",
+  "config.jump-thru-NPCs.tooltip": "If enabled, your jumps will pass through villagers instead of being blocked or hopping over them.",
+  "config.jump-thru-Farmers.name": "Jump Through Players",
+  "config.jump-thru-Farmers.tooltip": "If enabled, your jumps will pass through other farmers in multiplayer.",
   "config.rider-bounce.name": "Rider Bounce Factor",
   "config.rider-bounce.tooltip": "How much the rider moves in the saddle during a horse jump. 1.0 = glued to saddle, 0.0 = max bounce.",
 
@@ -116,6 +121,8 @@
   "config.enable-stand.tooltip": "If enabled, you will slowly regenerate stamina while standing.",
   "config.standing-regen.name": "Standing Regen Rate",
   "config.standing-regen.tooltip": "How much stamina you regenerate per second while standing.",
+  "config.walkstand-regen-delay.name": "Regen Delay (Seconds)",
+  "config.walkstand-regen-delay.tooltip": "How long you must walk/stand still before stamina regeneration begins.",
 
   // Animation Settings
   "config.animation.title": "Animation Smoothing",

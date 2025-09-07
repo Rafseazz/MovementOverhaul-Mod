@@ -424,11 +424,16 @@ namespace MovementOverhaul
                 // If it's an NPC and we can jump through them, the tile is NOT obstructed.
                 if (c is NPC && ModEntry.Config.JumpThroughNPCs)
                 {
-                    // Do nothing and proceed to the final 'return true'.
+                    // Allow landing.
+                }
+                // If it's another Farmer and we can jump through them, the tile is NOT obstructed.
+                else if (c is Farmer && ModEntry.Config.JumpThroughPlayers)
+                {
+                    // Allow landing.
                 }
                 else
                 {
-                    // It's another player, or an NPC we can't jump through. It's obstructed.
+                    // It's a character we can't jump through. The tile IS obstructed.
                     return false;
                 }
             }

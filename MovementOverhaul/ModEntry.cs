@@ -83,7 +83,7 @@ namespace MovementOverhaul
         public float JumpHeight { get; set; } = 36f;
         public float NormalJumpDistance { get; set; } = 1.5f;
         public float JumpDistanceScaleFactor { get; set; } = 0.5f;
-        public string JumpSound { get; set; } = "dwoop";
+        public string JumpSound { get; set; } = "pickUpItem";
         public bool AmplifyJumpSound { get; set; } = false;
         public float JumpStaminaCost { get; set; } = 0f;
         public bool JumpOverLargeStumps { get; set; } = false;
@@ -91,6 +91,7 @@ namespace MovementOverhaul
         public bool JumpOverBoulders { get; set; } = false;
         public bool JumpOverTrashCans { get; set; } = true;
         public bool JumpThroughNPCs { get; set; } = true;
+        public bool JumpThroughPlayers { get; set; } = true;
         public float HorseJumpPlayerBounce { get; set; } = 0.55f;
         public bool NoStaminaDrainOnHorse { get; set; } = false;
         public bool HopOverAnything { get; set; } = false;
@@ -292,9 +293,9 @@ namespace MovementOverhaul
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-duration.name"), tooltip: () => this.Helper.Translation.Get("config.jump-duration.tooltip"), min: 10f, max: 60f, interval: 1f, getValue: () => Config.JumpDuration, setValue: value => Config.JumpDuration = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-height.name"), tooltip: () => this.Helper.Translation.Get("config.jump-height.tooltip"), min: 24f, max: 96f, interval: 1f, getValue: () => Config.JumpHeight, setValue: value => Config.JumpHeight = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.base-jump-distance.name"), tooltip: () => this.Helper.Translation.Get("config.base-jump-distance.tooltip"), min: 1.0f, max: 5.0f, interval: 0.1f, getValue: () => Config.NormalJumpDistance, setValue: value => Config.NormalJumpDistance = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.name"), tooltip: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.tooltip"), min: 0.1f, max: 1.0f, interval: 0.1f, getValue: () => Config.JumpDistanceScaleFactor, setValue: value => Config.JumpDistanceScaleFactor = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.name"), tooltip: () => this.Helper.Translation.Get("config.jump-distance-scale-factor.tooltip"), min: 0.1f, max: 2.0f, interval: 0.1f, getValue: () => Config.JumpDistanceScaleFactor, setValue: value => Config.JumpDistanceScaleFactor = value);
             configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-sound.name"), tooltip: () => this.Helper.Translation.Get("config.jump-sound.tooltip"), getValue: () => Config.JumpSound, setValue: value => Config.JumpSound = value,
-                allowedValues: new string[] { "dwoop", "jingle1", "stoneStep", "flameSpell", "boop", "coin" },
+                allowedValues: new string[] { "pickUpItem", "dwoop", "jingle1", "stoneStep", "flameSpell", "boop", "coin"},
                 formatAllowedValue: value => this.Helper.Translation.Get($"config.jump-sound.value.{value}", new { defaultValue = value })
             );
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.amplify-jump-sound.name"), tooltip: () => this.Helper.Translation.Get("config.amplify-jump-sound.tooltip"), getValue: () => Config.AmplifyJumpSound, setValue: value => Config.AmplifyJumpSound = value);
@@ -306,10 +307,15 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-boulders.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-boulders.tooltip"), getValue: () => Config.JumpOverBoulders, setValue: value => Config.JumpOverBoulders = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-over-trashcans.name"), tooltip: () => this.Helper.Translation.Get("config.jump-over-trashcans.tooltip"), getValue: () => Config.JumpOverTrashCans, setValue: value => Config.JumpOverTrashCans = value);
             configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Jump Through NPCs",
-                tooltip: () => "If enabled, your jumps will pass through villagers instead of being blocked or hopping over them.",
+                name: () => this.Helper.Translation.Get("config.jump-thru-NPCs.name"),
+                tooltip: () => this.Helper.Translation.Get("config.jump-thru-NPCs.tooltip"),
                 getValue: () => Config.JumpThroughNPCs,
                 setValue: value => Config.JumpThroughNPCs = value);
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => this.Helper.Translation.Get("config.jump-thru-Farmers.name"),
+                tooltip: () => this.Helper.Translation.Get("config.jump-thru-Farmers.tooltip"),
+                getValue: () => Config.JumpThroughPlayers,
+                setValue: value => Config.JumpThroughPlayers = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.rider-bounce.name"), tooltip: () => this.Helper.Translation.Get("config.rider-bounce.tooltip"), getValue: () => Config.HorseJumpPlayerBounce, setValue: value => Config.HorseJumpPlayerBounce = value, min: 0.0f, max: 1.0f, interval: 0.05f);
 
             // SPRINT SETTINGS
@@ -352,8 +358,8 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-stand.name"), tooltip: () => this.Helper.Translation.Get("config.enable-stand.tooltip"), getValue: () => Config.RegenStaminaOnStand, setValue: value => Config.RegenStaminaOnStand = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.standing-regen.name"), tooltip: () => this.Helper.Translation.Get("config.standing-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.StandRegenPerSecond, setValue: value => Config.StandRegenPerSecond = value);
             configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Regen Delay (Seconds)",
-                tooltip: () => "How long you must walk/stand still before stamina regeneration begins.",
+                name: () => this.Helper.Translation.Get("config.walkstand-regen-delay.name"),
+                tooltip: () => this.Helper.Translation.Get("config.walkstand-regen-delay.tooltip"),
                 min: 0f, max: 5f, interval: 0.5f,
                 getValue: () => Config.WalkStandRegenDelaySeconds,
                 setValue: value => Config.WalkStandRegenDelaySeconds = value);
