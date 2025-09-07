@@ -262,6 +262,12 @@ namespace MovementOverhaul
                     jumper.Position = newPosition;
                     jumper.yJumpOffset = currentArcOffset;
 
+                    // If it's a horse jump, also apply the offset to the farmer sprite.
+                    if (jump.IsHorseJump)
+                    {
+                        farmer.yJumpOffset = (int)(currentArcOffset * ModEntry.Config.HorseJumpPlayerBounce);
+                    }
+
                     if (jumper is Farmer f && !jump.IsHorseJump)
                     {
                         f.Sprite.currentFrame = (jump.Progress < jump.Duration / 2) ? 12 : 11;
@@ -283,7 +289,7 @@ namespace MovementOverhaul
 
         private void EndJump(Farmer farmer, JumpArcState jump)
         {   
-            //Fail safe if ever player gets stuck while jumping on horse
+            // Fail safe if ever player gets stuck while jumping on horse
             if (farmer.IsLocalPlayer && jump.IsHorseJump)
             {
                 ModEntry.IsHorseJumping = false;

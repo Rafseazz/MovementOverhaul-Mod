@@ -111,17 +111,21 @@ namespace MovementOverhaul
         public bool SocialSittingFriendship { get; set; } = true;
         public bool FireSittingBuff { get; set; } = true;
         public bool MeditateForBuff { get; set; } = false;
-        public bool IdleSitEffects { get; set; } = false;
-        public bool RegenStaminaOnWalk { get; set; } = false;
+        public bool IdleSitEffects { get; set; } = true;
+        public bool RegenStaminaOnWalk { get; set; } = true;
         public float WalkRegenPerSecond { get; set; } = 1f;
-        public bool RegenStaminaOnStand { get; set; } = false;
+        public bool RegenStaminaOnStand { get; set; } = true;
         public float StandRegenPerSecond { get; set; } = 2f;
+        public bool SmootherTurningAnimation { get; set; } = false;
+        public bool AdaptiveAnimationSpeed { get; set; } = true;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
 
     public class ModEntry : Mod
     {
+        // A dictionary to track the sitting state of all remote players.
+        private static readonly Dictionary<long, SitStateMessage> _remoteSitters = new();
         public static IMonitor SMonitor { get; private set; } = null!;
         public static ModConfig Config { get; private set; } = null!;
         public static bool IsHorseJumping { get; set; } = false;
@@ -133,6 +137,7 @@ namespace MovementOverhaul
         public static JumpLogic JumpLogic { get; private set; } = null!;
         public static SitLogic SitLogic { get; private set; } = null!;
         public static WalkStandLogic WalkStandLogic { get; private set; } = null!;
+        public static AnimationLogic AnimationLogic { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
@@ -143,6 +148,7 @@ namespace MovementOverhaul
             JumpLogic = new JumpLogic(helper, helper.Multiplayer, this.ModManifest);
             SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
             WalkStandLogic = new WalkStandLogic(helper);
+            AnimationLogic = new AnimationLogic(helper);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -155,9 +161,10 @@ namespace MovementOverhaul
             helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
             helper.Events.GameLoop.UpdateTicking += JumpLogic.OnUpdateTicking;
             helper.Events.GameLoop.UpdateTicked += WalkStandLogic.OnUpdateTicked;
-
             helper.Events.Input.ButtonPressed += SprintLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SprintLogic.OnUpdateTicked;
+            helper.Events.GameLoop.UpdateTicked += AnimationLogic.OnUpdateTicked;
+            helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked_SyncRemoteStates;
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
         }
@@ -209,24 +216,48 @@ namespace MovementOverhaul
             else if (e.Type == "SitStateChanged")
             {
                 var msg = e.ReadAs<SitStateMessage>();
-                Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
-                if (farmer != null)
+                if (msg.IsSitting)
                 {
-                    if (msg.IsSitting)
+                    // A remote player is sitting. Store their state.
+                    _remoteSitters[msg.PlayerID] = msg;
+                }
+                else
+                {
+                    // A remote player stood up. Remove their state and fix their animation.
+                    if (_remoteSitters.ContainsKey(msg.PlayerID))
                     {
-                        farmer.canMove = false;
-                        farmer.completelyStopAnimatingOrDoingAction();
-                        farmer.faceDirection(msg.Direction);
-                        farmer.showFrame(msg.Frame, msg.IsFlipped);
-                        farmer.yJumpOffset = msg.YOffset;
+                        _remoteSitters.Remove(msg.PlayerID);
                     }
-                    else
+
+                    Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
+                    if (farmer != null)
                     {
                         farmer.canMove = true;
                         farmer.FarmerSprite.StopAnimation();
                         farmer.flip = false;
                         farmer.yJumpOffset = 0;
+                        farmer.FarmerSprite.setCurrentFrame(0);
                     }
+                }
+            }
+        }
+
+        // A dedicated update loop to enforce remote player animations.
+        private void OnUpdateTicked_SyncRemoteStates(object? sender, UpdateTickedEventArgs e)
+        {
+            if (!Context.IsMultiplayer) return;
+
+            foreach (var sitter in _remoteSitters)
+            {
+                Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == sitter.Key);
+                if (farmer != null)
+                {
+                    var state = sitter.Value;
+                    farmer.canMove = false;
+                    farmer.completelyStopAnimatingOrDoingAction();
+                    farmer.faceDirection(state.Direction);
+                    farmer.showFrame(state.Frame, state.IsFlipped);
+                    farmer.yJumpOffset = state.YOffset;
                 }
             }
         }
@@ -313,6 +344,11 @@ namespace MovementOverhaul
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.walking-regen.name"), tooltip: () => this.Helper.Translation.Get("config.walking-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.WalkRegenPerSecond, setValue: value => Config.WalkRegenPerSecond = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-stand.name"), tooltip: () => this.Helper.Translation.Get("config.enable-stand.tooltip"), getValue: () => Config.RegenStaminaOnStand, setValue: value => Config.RegenStaminaOnStand = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.standing-regen.name"), tooltip: () => this.Helper.Translation.Get("config.standing-regen.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.StandRegenPerSecond, setValue: value => Config.StandRegenPerSecond = value);
+
+            // ANIMATION SMOOTHING SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.animation.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-turning.name"), tooltip: () => this.Helper.Translation.Get("config.enable-turning.tooltip"), getValue: () => Config.SmootherTurningAnimation, setValue: value => Config.SmootherTurningAnimation = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-animspeed.name"), tooltip: () => this.Helper.Translation.Get("config.enable-animspeed.tooltip"), getValue: () => Config.AdaptiveAnimationSpeed, setValue: value => Config.AdaptiveAnimationSpeed = value);
         }
     }
 }

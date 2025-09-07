@@ -117,6 +117,13 @@
   "config.standing-regen.name": "Standing Regen Rate",
   "config.standing-regen.tooltip": "How much stamina you regenerate per second while standing.",
 
+  // Animation Settings
+  "config.animation.title": "Animation Smoothing",
+  "config.enable-turning.name": "Smoother Turning Animation",
+  "config.enable-turning.tooltip": "If enabled, adds a transitional frame when turning left-to-right to look less jarring. (Might have potential conflicts with other mods)",
+  "config.enable-animspeed.name": "Adaptive Animation Speed",
+  "config.enable-animspeed.tooltip": "If enabled, the speed of your character's run animation will match your movement speed to prevent 'ice skating'.",
+
 
   // == In-Game Messages ==
   "hud.social-sitting.npc": "{{npcName}} appreciated your company.",
