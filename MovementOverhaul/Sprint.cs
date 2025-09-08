@@ -16,6 +16,9 @@ namespace MovementOverhaul
 
         public bool IsSprinting { get; private set; } = false;
 
+        // A timer to track the grace period after a sprint ends.
+        private float timeSinceSprintStopped = 999f;
+
         // State for Keyboard DoubleTap
         private SButton lastMoveKeyPressed = SButton.None;
         private uint lastKeyPressTime = 0;
@@ -117,6 +120,12 @@ namespace MovementOverhaul
 
         public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
+            // If not sprinting, update the grace period timer.
+            if (!this.IsSprinting)
+            {
+                this.timeSinceSprintStopped += (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+            }
+
             if (!ModEntry.Config.EnableSprint)
             {
                 if (this.IsSprinting) this.StopSprint();
@@ -240,6 +249,7 @@ namespace MovementOverhaul
         private void StopSprint()
         {
             this.IsSprinting = false;
+            this.timeSinceSprintStopped = 0f;
             this.tapCount = 0;
             this.lastControllerDirection = -1;
 
@@ -253,6 +263,14 @@ namespace MovementOverhaul
                 Game1.playSound("woodyStep");
             }
         }
+
+        // A public method for the combat logic to check the grace period.
+        public bool WasSprintingRecently()
+        {
+            // Sprint is active if currently sprinting OR if the grace period (0.2s) hasn't passed.
+            return this.IsSprinting || this.timeSinceSprintStopped < ModEntry.Config.SprintAttackGracePeriod; 
+        }
+
 
         public float GetSpeedMultiplier()
         {

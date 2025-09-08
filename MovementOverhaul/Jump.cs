@@ -40,6 +40,9 @@ namespace MovementOverhaul
         // A dictionary to track all currently active jumps.
         private readonly Dictionary<long, JumpArcState> _activeJumps = new();
 
+        // A helper property for other classes to easily check if a jump is happening.
+        public bool IsJumping => this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID);
+
         private readonly IModHelper Helper;
         private readonly IMultiplayerHelper Multiplayer;
         private readonly IManifest ModManifest;

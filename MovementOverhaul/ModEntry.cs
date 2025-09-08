@@ -121,6 +121,12 @@ namespace MovementOverhaul
         public float WalkStandRegenDelaySeconds { get; set; } = 1.5f;
         public bool SmootherTurningAnimation { get; set; } = false;
         public bool AdaptiveAnimationSpeed { get; set; } = true;
+        public bool EnableDashAttack { get; set; } = true;
+        public float DashAttackDamageMultiplier { get; set; } = 1.25f; // 25% damage bonus
+        public float DashAttackStaminaCost { get; set; } = 5f;
+        public bool EnableJumpAttack { get; set; } = true;
+        public float JumpAttackDamageMultiplier { get; set; } = 1.5f; // 50% damage bonus
+        public float SprintAttackGracePeriod { get; set; } = 0.25f; // Default to 250ms
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -141,6 +147,7 @@ namespace MovementOverhaul
         public static SitLogic SitLogic { get; private set; } = null!;
         public static WalkStandLogic WalkStandLogic { get; private set; } = null!;
         public static AnimationLogic AnimationLogic { get; private set; } = null!;
+        public static CombatLogic CombatLogic { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
@@ -152,6 +159,7 @@ namespace MovementOverhaul
             SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
             WalkStandLogic = new WalkStandLogic(helper);
             AnimationLogic = new AnimationLogic(helper);
+            CombatLogic = new CombatLogic(helper, this.Monitor);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -159,6 +167,8 @@ namespace MovementOverhaul
             helper.Events.GameLoop.GameLaunched += this.OnGameLaunched;
 
             this.HookUpJumpEvents();
+
+            helper.Events.Input.ButtonPressed += this.OnButtonPressed_Combat_Wrapper;
 
             helper.Events.Input.ButtonPressed += SitLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
@@ -168,8 +178,28 @@ namespace MovementOverhaul
             helper.Events.GameLoop.UpdateTicked += SprintLogic.OnUpdateTicked;
             helper.Events.GameLoop.UpdateTicked += AnimationLogic.OnUpdateTicked;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked_SyncRemoteStates;
+            helper.Events.GameLoop.UpdateTicked += CombatLogic.OnUpdateTicked;
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
+        }
+
+        // A high-priority wrapper method to handle and suppress combat input if needed.
+        [EventPriority(EventPriority.High)]
+        private void OnButtonPressed_Combat_Wrapper(object? sender, ButtonPressedEventArgs e)
+        {
+            // This doesn't perform the action, it just tells CombatLogic what the player wants to do.
+            ModEntry.CombatLogic.HandleDashAttackInput(e);
+        }
+        public static Vector2 GetDirectionVectorFromFacing(int facingDirection)
+        {
+            return facingDirection switch
+            {
+                0 => new Vector2(0, -1), // Up
+                1 => new Vector2(1, 0),  // Right
+                2 => new Vector2(0, 1),  // Down
+                3 => new Vector2(-1, 0), // Left
+                _ => Vector2.Zero,
+            };
         }
 
         private void UnhookJumpEvents()
@@ -368,6 +398,20 @@ namespace MovementOverhaul
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.animation.title"));
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-turning.name"), tooltip: () => this.Helper.Translation.Get("config.enable-turning.tooltip"), getValue: () => Config.SmootherTurningAnimation, setValue: value => Config.SmootherTurningAnimation = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-animspeed.name"), tooltip: () => this.Helper.Translation.Get("config.enable-animspeed.tooltip"), getValue: () => Config.AdaptiveAnimationSpeed, setValue: value => Config.AdaptiveAnimationSpeed = value);
+
+            // COMBAT SETTINGS
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Combat Settings");
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Dash Attack", tooltip: () => "If enabled, attacking while sprinting performs a dashing attack.", getValue: () => Config.EnableDashAttack, setValue: value => Config.EnableDashAttack = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dash Attack Stamina Cost", tooltip: () => "How much stamina the dash attack costs.", min: 0f, max: 20f, interval: 1f, getValue: () => Config.DashAttackStaminaCost, setValue: value => Config.DashAttackStaminaCost = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dash Attack Damage Multiplier", tooltip: () => "The damage multiplier for the dash attack (e.g., 1.5 for 50% bonus damage).", min: 1.0f, max: 3.0f, interval: 0.05f, getValue: () => Config.DashAttackDamageMultiplier, setValue: value => Config.DashAttackDamageMultiplier = value);
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Sprint Attack Grace Period",
+                tooltip: () => "The timing window (in seconds) for a sprint attack to trigger after you stop sprinting. Increase if activation feels unreliable.",
+                min: 0.1f, max: 0.5f, interval: 0.05f,
+                getValue: () => Config.SprintAttackGracePeriod,
+                setValue: value => Config.SprintAttackGracePeriod = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump Attack", tooltip: () => "If enabled, attacking while in the air grants a temporary damage buff.", getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Attack Damage Bonus", tooltip: () => "The flat Attack bonus added to a jump attack. +2 is like eating a food buff.", min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
         }
     }
 }
