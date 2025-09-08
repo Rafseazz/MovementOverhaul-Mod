@@ -16,6 +16,7 @@ namespace MovementOverhaul
         private bool isDashing = false;
         private int dashTimer = 0;
         private Vector2 dashDirection;
+        private float dashCooldownTimer = 0f;
 
         public bool IsPerformingDashAttack => this.isDashing;
 
@@ -46,6 +47,11 @@ namespace MovementOverhaul
         {
             if (!Context.IsWorldReady) return;
 
+            if (this.dashCooldownTimer > 0f)
+            {
+                this.dashCooldownTimer -= (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+            }
+
             if (this.isDashing)
             {
                 // Stop the dash if the player is no longer swinging
@@ -69,6 +75,23 @@ namespace MovementOverhaul
             }
         }
 
+        public bool CheckAndBlockCooldown(ButtonPressedEventArgs e)
+        {
+            // We only care about the standard attack button.
+            if (!e.Button.IsUseToolButton() || !ModEntry.Config.EnableDashAttackCooldown)
+                return false;
+
+            // If the cooldown is active and the player is trying to dash, block it.
+            if (this.dashCooldownTimer > 0f && ModEntry.SprintLogic.WasSprintingRecently())
+            {
+                Game1.player.doEmote(36); // 'X' emote
+                Game1.playSound("cancel");
+                return true; // Block this input.
+            }
+
+            return false; // Don't block.
+        }
+
         public void ActivateDash()
         {
             if (this.isDashing) return;
@@ -77,6 +100,12 @@ namespace MovementOverhaul
             this.dashDirection = ModEntry.GetDirectionVectorFromFacing(Game1.player.FacingDirection);
 
             Game1.playSound("daggerswipe");
+
+            // Start the cooldown timer.
+            if (ModEntry.Config.EnableDashAttackCooldown)
+            {
+                this.dashCooldownTimer = ModEntry.Config.DashAttackCooldownSeconds;
+            }
         }
     }
 
@@ -121,7 +150,7 @@ namespace MovementOverhaul
                 if (__instance is not MeleeWeapon)
                     return;
 
-                // MODIFIED: This now checks for the "intent" flag set by the high-priority input handler.
+                // This now checks for the "intent" flag set by the high-priority input handler.
                 if (ModEntry.Config.EnableDashAttack && who.IsLocalPlayer && ModEntry.SprintLogic.WasSprintingRecently())
                 {
                     if (ModEntry.CombatLogic.IsPerformingDashAttack)

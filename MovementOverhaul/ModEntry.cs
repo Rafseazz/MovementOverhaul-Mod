@@ -124,6 +124,8 @@ namespace MovementOverhaul
         public bool EnableDashAttack { get; set; } = true;
         public float DashAttackDamageMultiplier { get; set; } = 1.25f; // 25% damage bonus
         public float DashAttackStaminaCost { get; set; } = 5f;
+        public bool EnableDashAttackCooldown { get; set; } = true;
+        public float DashAttackCooldownSeconds { get; set; } = 1.5f;
         public bool EnableJumpAttack { get; set; } = true;
         public float JumpAttackDamageMultiplier { get; set; } = 1.5f; // 50% damage bonus
         public float SprintAttackGracePeriod { get; set; } = 0.25f; // Default to 250ms
@@ -168,7 +170,7 @@ namespace MovementOverhaul
 
             this.HookUpJumpEvents();
 
-            helper.Events.Input.ButtonPressed += this.OnButtonPressed_Combat_Wrapper;
+            helper.Events.Input.ButtonPressed += this.OnButtonPressed_Combat_CooldownCheck;
 
             helper.Events.Input.ButtonPressed += SitLogic.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += SitLogic.OnUpdateTicked;
@@ -183,13 +185,20 @@ namespace MovementOverhaul
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
         }
 
-        // A high-priority wrapper method to handle and suppress combat input if needed.
+        // A high-priority wrapper to check for cooldowns before any other action.
         [EventPriority(EventPriority.High)]
-        private void OnButtonPressed_Combat_Wrapper(object? sender, ButtonPressedEventArgs e)
+        private void OnButtonPressed_Combat_CooldownCheck(object? sender, ButtonPressedEventArgs e)
         {
-            // This doesn't perform the action, it just tells CombatLogic what the player wants to do.
-            ModEntry.CombatLogic.HandleDashAttackInput(e);
+            if (CombatLogic.CheckAndBlockCooldown(e))
+            {
+                this.Helper.Input.Suppress(e.Button);
+            }
+            else
+            {
+                ModEntry.CombatLogic.HandleDashAttackInput(e);
+            }
         }
+
         public static Vector2 GetDirectionVectorFromFacing(int facingDirection)
         {
             return facingDirection switch
@@ -410,6 +419,19 @@ namespace MovementOverhaul
                 min: 0.1f, max: 0.5f, interval: 0.05f,
                 getValue: () => Config.SprintAttackGracePeriod,
                 setValue: value => Config.SprintAttackGracePeriod = value);
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Enable Dash Cooldown",
+                tooltip: () => "If enabled, the dash attack will have a cooldown period after use.",
+                getValue: () => Config.EnableDashAttackCooldown,
+                setValue: value => Config.EnableDashAttackCooldown = value
+            );
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Dash Cooldown (Seconds)",
+                tooltip: () => "How long you must wait before using the dash attack again.",
+                min: 0.5f, max: 5f, interval: 0.25f,
+                getValue: () => Config.DashAttackCooldownSeconds,
+                setValue: value => Config.DashAttackCooldownSeconds = value
+            );
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump Attack", tooltip: () => "If enabled, attacking while in the air grants a temporary damage buff.", getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Attack Damage Bonus", tooltip: () => "The flat Attack bonus added to a jump attack. +2 is like eating a food buff.", min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
         }
