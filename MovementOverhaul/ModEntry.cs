@@ -72,6 +72,21 @@ namespace MovementOverhaul
             this.YOffset = yOffset;
         }
     }
+    public class DashAttackMessage
+    {
+        public long PlayerID { get; set; }
+        public bool IsStarting { get; set; } // True to start, false to stop
+        public Vector2 Direction { get; set; }
+
+        public DashAttackMessage() { }
+        public DashAttackMessage(long id, bool isStarting, Vector2 direction)
+        {
+            this.PlayerID = id;
+            this.IsStarting = isStarting;
+            this.Direction = direction;
+        }
+    }
+
     public enum SprintMode { DoubleTap, Hold, Toggle }
     public class ModConfig
     {
@@ -125,7 +140,9 @@ namespace MovementOverhaul
         public float DashAttackDamageMultiplier { get; set; } = 1.25f; // 25% damage bonus
         public float DashAttackStaminaCost { get; set; } = 5f;
         public bool EnableDashAttackCooldown { get; set; } = true;
-        public float DashAttackCooldownSeconds { get; set; } = 1.5f;
+        public float SwordDashCooldown { get; set; } = 1.5f;
+        public float DaggerDashCooldown { get; set; } = 0.5f;
+        public float ClubDashCooldown { get; set; } = 3f;
         public bool EnableJumpAttack { get; set; } = true;
         public float JumpAttackDamageMultiplier { get; set; } = 1.5f; // 50% damage bonus
         public float SprintAttackGracePeriod { get; set; } = 0.25f; // Default to 250ms
@@ -161,7 +178,7 @@ namespace MovementOverhaul
             SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
             WalkStandLogic = new WalkStandLogic(helper);
             AnimationLogic = new AnimationLogic(helper);
-            CombatLogic = new CombatLogic(helper, this.Monitor);
+            CombatLogic = new CombatLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -281,6 +298,11 @@ namespace MovementOverhaul
                         farmer.FarmerSprite.setCurrentFrame(0);
                     }
                 }
+            }
+            else if (e.Type == "DashAttackStateChanged")
+            {
+                var msg = e.ReadAs<DashAttackMessage>();
+                CombatLogic.HandleRemoteDashState(msg);
             }
         }
 
@@ -425,13 +447,9 @@ namespace MovementOverhaul
                 getValue: () => Config.EnableDashAttackCooldown,
                 setValue: value => Config.EnableDashAttackCooldown = value
             );
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Dash Cooldown (Seconds)",
-                tooltip: () => "How long you must wait before using the dash attack again.",
-                min: 0.5f, max: 5f, interval: 0.25f,
-                getValue: () => Config.DashAttackCooldownSeconds,
-                setValue: value => Config.DashAttackCooldownSeconds = value
-            );
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Sword Cooldown", tooltip: () => "Cooldown for Sword dash attacks.", min: 0.5f, max: 10f, interval: 0.25f, getValue: () => Config.SwordDashCooldown, setValue: value => Config.SwordDashCooldown = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dagger Cooldown", tooltip: () => "Cooldown for Dagger dash attacks.", min: 0.25f, max: 10f, interval: 0.25f, getValue: () => Config.DaggerDashCooldown, setValue: value => Config.DaggerDashCooldown = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Club/Hammer Cooldown", tooltip: () => "Cooldown for Club and Hammer dash attacks.", min: 1.0f, max: 10f, interval: 0.25f, getValue: () => Config.ClubDashCooldown, setValue: value => Config.ClubDashCooldown = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump Attack", tooltip: () => "If enabled, attacking while in the air grants a temporary damage buff.", getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Attack Damage Bonus", tooltip: () => "The flat Attack bonus added to a jump attack. +2 is like eating a food buff.", min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
         }

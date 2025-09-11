@@ -1,13 +1,14 @@
-﻿using System;
-using System.Linq;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Characters;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
+using System;
+using System.Linq;
 using xTile.Dimensions;
 
 namespace MovementOverhaul
@@ -50,6 +51,10 @@ namespace MovementOverhaul
         public bool IsChargingJump { get; private set; } = false;
         private float jumpChargeTimer = 0f;
         private const float MAX_JUMP_CHARGE_SECONDS = 0.75f;
+        public bool IsPlayerJumping(long farmerId)
+        {
+            return this._activeJumps.ContainsKey(farmerId);
+        }
 
         public JumpLogic(IModHelper helper, IMultiplayerHelper multiplayer, IManifest manifest)
         {
@@ -465,6 +470,32 @@ namespace MovementOverhaul
 
                 Game1.player.Position = __instance.Position;
                 Game1.player.yJumpOffset = (int)(__instance.yJumpOffset * ModEntry.CurrentBounceFactor);
+            }
+        }
+    }
+
+    // Sync held item to jump
+    [HarmonyPatch(typeof(StardewValley.Object), nameof(StardewValley.Object.drawWhenHeld))]
+    public class Object_DrawWhenHeld_Patch
+    {
+        /// <summary>
+        /// This Prefix patch runs BEFORE the game draws an item being held.
+        /// It modifies the 'objectPosition' parameter by reference if the holding farmer is jumping.
+        /// </summary>
+        public static void Prefix(StardewValley.Object __instance, Farmer f, ref Vector2 objectPosition)
+        {
+            try
+            {
+                // Check if the farmer holding the item is currently jumping via our mod.
+                if (ModEntry.JumpLogic != null && ModEntry.JumpLogic.IsPlayerJumping(f.UniqueMultiplayerID))
+                {
+                    // Add the farmer's vertical jump offset to the item's draw position.
+                    objectPosition.Y += f.yJumpOffset;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModEntry.SMonitor.Log($"Failed in {nameof(Object_DrawWhenHeld_Patch)}:\n{ex}", LogLevel.Error);
             }
         }
     }
