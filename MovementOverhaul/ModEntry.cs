@@ -93,6 +93,13 @@ namespace MovementOverhaul
         public WhistleMessage() { }
         public WhistleMessage(long playerID) { this.PlayerID = playerID; }
     }
+    public class WhistleAnimationMessage
+    {
+        public long PlayerID { get; set; }
+
+        public WhistleAnimationMessage() { }
+        public WhistleAnimationMessage(long playerID) { this.PlayerID = playerID; }
+    }
 
     public enum SprintMode { DoubleTap, Hold, Toggle }
     public class ModConfig
@@ -158,6 +165,8 @@ namespace MovementOverhaul
         public int WhistleAnimalMinHearts { get; set; } = 3;
         public bool WhistleAggrosMonsters { get; set; } = false;
         public bool HearRemoteWhistles { get; set; } = true;
+        public bool WhistleAnnoysNPCs { get; set; } = true;
+        public int WhistleFriendshipPenalty { get; set; } = 10;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -213,8 +222,25 @@ namespace MovementOverhaul
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked_SyncRemoteStates;
             helper.Events.GameLoop.UpdateTicked += CombatLogic.OnUpdateTicked;
             helper.Events.Input.ButtonPressed += NpcLogic.OnButtonPressed;
+            helper.Events.GameLoop.DayStarted += this.OnDayStarted;
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
+
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
+        }
+        private void OnDayStarted(object? sender, DayStartedEventArgs e)
+        {
+            NpcLogic.ResetDailyState();
+        }
+
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        {
+            NpcLogic.ResetState();
+        }
+        private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+        {
+            NpcLogic.ResetState();
         }
 
         // A high-priority wrapper to check for cooldowns before any other action.
@@ -323,6 +349,11 @@ namespace MovementOverhaul
             {
                 var msg = e.ReadAs<WhistleMessage>();
                 NpcLogic.HandleRemoteWhistle(msg.PlayerID);
+            }
+            else if (e.Type == "PlayWhistleAnimation")
+            {
+                var msg = e.ReadAs<WhistleAnimationMessage>();
+                NpcLogic.HandleRemoteWhistleAnimation(msg.PlayerID);
             }
         }
 
@@ -488,6 +519,19 @@ namespace MovementOverhaul
                 tooltip: () => "If enabled, you will hear the sound effect when other players use their whistle.",
                 getValue: () => Config.HearRemoteWhistles,
                 setValue: value => Config.HearRemoteWhistles = value
+            );
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Whistle Annoys NPCs",
+                tooltip: () => "If enabled, whistling near villagers will make them react. Whistling too often will annoy them.",
+                getValue: () => Config.WhistleAnnoysNPCs,
+                setValue: value => Config.WhistleAnnoysNPCs = value
+            );
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Annoyance Friendship Penalty",
+                tooltip: () => "How much friendship you lose for whistling at an already-annoyed NPC.",
+                min: 0, max: 50, interval: 5,
+                getValue: () => Config.WhistleFriendshipPenalty,
+                setValue: value => Config.WhistleFriendshipPenalty = value
             );
         }
     }

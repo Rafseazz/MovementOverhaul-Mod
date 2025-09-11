@@ -11,12 +11,12 @@
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -30,7 +30,7 @@
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "manifest.json",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\manifest.json",
               "RelativeDocumentMoniker": "MovementOverhaul\\manifest.json",
@@ -38,20 +38,20 @@
               "RelativeToolTip": "MovementOverhaul\\manifest.json",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAACAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-07-29T09:13:52.828Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-07-29T09:13:52.828Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "default.json",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\i18n\\default.json",
               "RelativeDocumentMoniker": "MovementOverhaul\\i18n\\default.json",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\i18n\\default.json",
               "RelativeToolTip": "MovementOverhaul\\i18n\\default.json",
-              "ViewState": "AgIAACEAAAAAAAAAAAAAABoAAAAwAAAAAAAAAA==",
+              "ViewState": "AgIAADkAAAAAAAAAAAAAABoAAAAwAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-08-01T02:49:52.582Z"
+              "WhenOpened": "2025-08-01T02:49:52.582Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -61,7 +61,7 @@
               "RelativeDocumentMoniker": "MovementOverhaul\\ModEntry.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\ModEntry.cs",
               "RelativeToolTip": "MovementOverhaul\\ModEntry.cs",
-              "ViewState": "AgIAANIBAAAAAAAAAAAAAOgBAAA5AAAAAAAAAA==",
+              "ViewState": "AgIAANcAAAAAAAAAAAAiwOsAAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-29T09:12:17.402Z",
               "EditorCaption": ""
@@ -74,7 +74,7 @@
               "RelativeDocumentMoniker": "MovementOverhaul\\NPC.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\NPC.cs",
               "RelativeToolTip": "MovementOverhaul\\NPC.cs",
-              "ViewState": "AgIAAC4AAAAAAAAAAADgv0MAAAAqAAAAAAAAAA==",
+              "ViewState": "AgIAABABAAAAAAAAAAAiwB0BAAAJAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-11T02:34:43.3Z",
               "EditorCaption": ""
