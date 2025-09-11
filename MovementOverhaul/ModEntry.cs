@@ -75,7 +75,7 @@ namespace MovementOverhaul
     public class DashAttackMessage
     {
         public long PlayerID { get; set; }
-        public bool IsStarting { get; set; } // True to start, false to stop
+        public bool IsStarting { get; set; }
         public Vector2 Direction { get; set; }
 
         public DashAttackMessage() { }
@@ -85,6 +85,13 @@ namespace MovementOverhaul
             this.IsStarting = isStarting;
             this.Direction = direction;
         }
+    }
+    public class WhistleMessage
+    {
+        public long PlayerID { get; set; } // The ID of the player who whistled
+
+        public WhistleMessage() { }
+        public WhistleMessage(long playerID) { this.PlayerID = playerID; }
     }
 
     public enum SprintMode { DoubleTap, Hold, Toggle }
@@ -146,6 +153,11 @@ namespace MovementOverhaul
         public bool EnableJumpAttack { get; set; } = true;
         public float JumpAttackDamageMultiplier { get; set; } = 1.5f; // 50% damage bonus
         public float SprintAttackGracePeriod { get; set; } = 0.25f; // Default to 250ms
+        public bool EnableWhistle { get; set; } = true;
+        public SButton WhistleKey { get; set; } = SButton.OemComma;
+        public int WhistleAnimalMinHearts { get; set; } = 3;
+        public bool WhistleAggrosMonsters { get; set; } = false;
+        public bool HearRemoteWhistles { get; set; } = true;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -167,6 +179,7 @@ namespace MovementOverhaul
         public static WalkStandLogic WalkStandLogic { get; private set; } = null!;
         public static AnimationLogic AnimationLogic { get; private set; } = null!;
         public static CombatLogic CombatLogic { get; private set; } = null!;
+        public static NpcLogic NpcLogic { get; private set; } = null!;
 
         public override void Entry(IModHelper helper)
         {
@@ -179,6 +192,7 @@ namespace MovementOverhaul
             WalkStandLogic = new WalkStandLogic(helper);
             AnimationLogic = new AnimationLogic(helper);
             CombatLogic = new CombatLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
+            NpcLogic = new NpcLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
 
             var harmony = new Harmony(this.ModManifest.UniqueID);
             harmony.PatchAll();
@@ -198,6 +212,7 @@ namespace MovementOverhaul
             helper.Events.GameLoop.UpdateTicked += AnimationLogic.OnUpdateTicked;
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked_SyncRemoteStates;
             helper.Events.GameLoop.UpdateTicked += CombatLogic.OnUpdateTicked;
+            helper.Events.Input.ButtonPressed += NpcLogic.OnButtonPressed;
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
         }
@@ -303,6 +318,11 @@ namespace MovementOverhaul
             {
                 var msg = e.ReadAs<DashAttackMessage>();
                 CombatLogic.HandleRemoteDashState(msg);
+            }
+            else if (e.Type == "WhistleCommand")
+            {
+                var msg = e.ReadAs<WhistleMessage>();
+                NpcLogic.HandleRemoteWhistle(msg.PlayerID);
             }
         }
 
@@ -452,6 +472,23 @@ namespace MovementOverhaul
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Club/Hammer Cooldown", tooltip: () => "Cooldown for Club and Hammer dash attacks.", min: 1.0f, max: 10f, interval: 0.25f, getValue: () => Config.ClubDashCooldown, setValue: value => Config.ClubDashCooldown = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump Attack", tooltip: () => "If enabled, attacking while in the air grants a temporary damage buff.", getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Attack Damage Bonus", tooltip: () => "The flat Attack bonus added to a jump attack. +2 is like eating a food buff.", min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
+
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Whistle Command");
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Whistle", tooltip: () => "If enabled, you can press a key to call your pet and high-friendship animals to you.", getValue: () => Config.EnableWhistle, setValue: value => Config.EnableWhistle = value);
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => "Whistle Key", tooltip: () => "The key to press to call your animals.", getValue: () => Config.WhistleKey, setValue: value => Config.WhistleKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Animal Call Min Hearts", tooltip: () => "The minimum friendship level required for a farm animal to respond to your whistle.", min: 0, max: 5, interval: 1, getValue: () => Config.WhistleAnimalMinHearts, setValue: value => Config.WhistleAnimalMinHearts = value);
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Whistle Attracts Monsters (May be buggy)",
+                tooltip: () => "If enabled, using the whistle in a dangerous location will attract all nearby monsters.",
+                getValue: () => Config.WhistleAggrosMonsters,
+                setValue: value => Config.WhistleAggrosMonsters = value
+            );
+            configMenu.AddBoolOption(mod: this.ModManifest,
+                name: () => "Hear Others' Whistles",
+                tooltip: () => "If enabled, you will hear the sound effect when other players use their whistle.",
+                getValue: () => Config.HearRemoteWhistles,
+                setValue: value => Config.HearRemoteWhistles = value
+            );
         }
     }
 }
