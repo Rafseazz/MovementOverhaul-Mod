@@ -165,6 +165,7 @@ namespace MovementOverhaul
         public int WhistleAnimalMinHearts { get; set; } = 3;
         public bool WhistleAggrosMonsters { get; set; } = false;
         public bool HearRemoteWhistles { get; set; } = true;
+        public float NPCPauseFromWhistle { get; set; } = 1.5f;
         public bool WhistleAnnoysNPCs { get; set; } = true;
         public int WhistleNumberBeforeAnnoying { get; set; } = 5;
         public int WhistleFriendshipPenalty { get; set; } = 10;
@@ -225,11 +226,24 @@ namespace MovementOverhaul
             helper.Events.GameLoop.UpdateTicked += this.OnUpdateTicked_SyncRemoteStates;
             helper.Events.GameLoop.UpdateTicked += CombatLogic.OnUpdateTicked;
             helper.Events.Input.ButtonPressed += NpcLogic.OnButtonPressed;
+            helper.Events.GameLoop.UpdateTicked += NpcLogic.OnUpdateTicked;
             helper.Events.GameLoop.DayStarted += this.OnDayStarted;
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
 
         }
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        {
+            NpcLogic.ResetState();
+        }
+
+        private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
+        {
+            NpcLogic.ResetState();
+        }
+
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
         {
             NpcLogic.ResetDailyState();
@@ -511,6 +525,13 @@ namespace MovementOverhaul
                 tooltip: () => "If enabled, you will hear the sound effect when other players use their whistle.",
                 getValue: () => Config.HearRemoteWhistles,
                 setValue: value => Config.HearRemoteWhistles = value
+            );
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "NPC Pause after hearing Whistle",
+                tooltip: () => "How many seconds a NPC will pause after hearing a whistle.",
+                min: 0f, max: 10f, interval: 0.5f,
+                getValue: () => Config.NPCPauseFromWhistle,
+                setValue: value => Config.NPCPauseFromWhistle = value
             );
             configMenu.AddBoolOption(mod: this.ModManifest,
                 name: () => "Whistle Annoys NPCs",

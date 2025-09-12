@@ -20,6 +20,19 @@ namespace MovementOverhaul
             public int WhistleCount { get; set; } = 0;
             public bool HasLostFriendshipToday { get; set; } = false;
         }
+        private class PausedNpcState
+        {
+            public readonly NPC Npc;
+            public float PauseTimer;
+            public readonly PathFindController? OriginalController;
+
+            public PausedNpcState(NPC npc, float duration)
+            {
+                this.Npc = npc;
+                this.PauseTimer = duration;
+                this.OriginalController = npc.controller;
+            }
+        }
 
         private readonly IModHelper Helper;
         private readonly IMonitor Monitor;
@@ -27,6 +40,7 @@ namespace MovementOverhaul
         private readonly IManifest ModManifest;
         private int originalPetSpeed = -1;
         private readonly Dictionary<string, AnnoyanceState> npcAnnoyanceTracker = new();
+        private readonly List<PausedNpcState> _pausedNpcs = new();
 
         public NpcLogic(IModHelper helper, IMonitor monitor, IMultiplayerHelper multiplayer, IManifest manifest)
         {
@@ -54,6 +68,31 @@ namespace MovementOverhaul
             }
         }
 
+        public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
+        {
+            if (!Context.IsWorldReady)
+                return;
+
+            // --- Paused NPC Countdown & State Restoration ---
+            if (this._pausedNpcs.Any())
+            {
+                float elapsedSeconds = (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+                for (int i = this._pausedNpcs.Count - 1; i >= 0; i--)
+                {
+                    var state = this._pausedNpcs[i];
+                    state.PauseTimer -= elapsedSeconds;
+
+                    //state.Npc.Halt(); // Keep them frozen
+
+                    if (state.PauseTimer <= 0f)
+                    {
+                        // Timer is up, restore their original pathfinding controller
+                        state.Npc.controller = state.OriginalController;
+                        this._pausedNpcs.RemoveAt(i);
+                    }
+                }
+            }
+        }
         public void HandleRemoteWhistle(long playerID)
         {
             Farmer? whistler = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerID);
@@ -128,6 +167,8 @@ namespace MovementOverhaul
                         this.npcAnnoyanceTracker[npc.Name] = annoyanceState;
                     }
 
+                    this.PauseNpc(npc, ModEntry.Config.NPCPauseFromWhistle);
+
                     if (annoyanceState.HasLostFriendshipToday)
                     {
                         npc.doEmote(40); // "..." emote
@@ -164,6 +205,22 @@ namespace MovementOverhaul
                 }
             }
         }
+        private void PauseNpc(NPC npc, float durationSeconds)
+        {
+            var existingState = this._pausedNpcs.FirstOrDefault(p => p.Npc == npc);
+            if (existingState != null)
+            {
+                existingState.PauseTimer = durationSeconds; // Reset timer if already paused
+            }
+            else
+            {
+                // Add a new paused state, which saves the NPC's current controller.
+                this._pausedNpcs.Add(new PausedNpcState(npc, durationSeconds));
+            }
+            // Temporarily clear the controller to ensure they stop immediately.
+            //npc.Halt();
+            npc.controller = null;
+        }
 
         private void StartWhistleAnimation(Farmer who)
         {
@@ -191,6 +248,11 @@ namespace MovementOverhaul
                     }
                 }
             });
+        }
+
+        public void ResetState()
+        {
+            this._pausedNpcs.Clear();
         }
 
         public void ResetDailyState()
