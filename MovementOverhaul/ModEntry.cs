@@ -166,7 +166,10 @@ namespace MovementOverhaul
         public bool WhistleAggrosMonsters { get; set; } = false;
         public bool HearRemoteWhistles { get; set; } = true;
         public bool WhistleAnnoysNPCs { get; set; } = true;
+        public int WhistleNumberBeforeAnnoying { get; set; } = 5;
         public int WhistleFriendshipPenalty { get; set; } = 10;
+        public bool EnableRunningLate { get; set; } = true;
+        public int DistanceConsideredFar { get; set; } = 100;
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -226,21 +229,10 @@ namespace MovementOverhaul
 
             helper.Events.Multiplayer.ModMessageReceived += this.OnModMessageReceived;
 
-            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
-            helper.Events.GameLoop.ReturnedToTitle += this.OnReturnedToTitle;
         }
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
         {
             NpcLogic.ResetDailyState();
-        }
-
-        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
-        {
-            NpcLogic.ResetState();
-        }
-        private void OnReturnedToTitle(object? sender, ReturnedToTitleEventArgs e)
-        {
-            NpcLogic.ResetState();
         }
 
         // A high-priority wrapper to check for cooldowns before any other action.
@@ -527,11 +519,27 @@ namespace MovementOverhaul
                 setValue: value => Config.WhistleAnnoysNPCs = value
             );
             configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Number of tolerable whistling for NPCs",
+                tooltip: () => "How many whistling a NPC can tolerate before it becomes annoying.",
+                min: 0, max: 20, interval: 1,
+                getValue: () => Config.WhistleNumberBeforeAnnoying,
+                setValue: value => Config.WhistleNumberBeforeAnnoying = value
+            );
+            configMenu.AddNumberOption(mod: this.ModManifest,
                 name: () => "Annoyance Friendship Penalty",
                 tooltip: () => "How much friendship you lose for whistling at an already-annoyed NPC.",
                 min: 0, max: 50, interval: 5,
                 getValue: () => Config.WhistleFriendshipPenalty,
                 setValue: value => Config.WhistleFriendshipPenalty = value
+            );
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "NPC Movement");
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Running Late Behavior", tooltip: () => "If enabled, NPCs will walk faster if they are far away from their destination.", getValue: () => Config.EnableRunningLate, setValue: value => Config.EnableRunningLate = value);
+            configMenu.AddNumberOption(mod: this.ModManifest,
+                name: () => "Distance considered far for NPC.",
+                tooltip: () => "How much tiles is considered far for an NPC for them to start running. (Example: 20 means NPC will run until reaching 20 tiles near their destination)",
+                min: 0, max: 500, interval: 10,
+                getValue: () => Config.DistanceConsideredFar,
+                setValue: value => Config.DistanceConsideredFar = value
             );
         }
     }

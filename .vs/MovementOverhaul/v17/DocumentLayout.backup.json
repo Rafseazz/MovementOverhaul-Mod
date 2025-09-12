@@ -50,8 +50,7 @@
               "RelativeToolTip": "MovementOverhaul\\i18n\\default.json",
               "ViewState": "AgIAADkAAAAAAAAAAAAAABoAAAAwAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-08-01T02:49:52.582Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-08-01T02:49:52.582Z"
             },
             {
               "$type": "Document",
@@ -61,7 +60,7 @@
               "RelativeDocumentMoniker": "MovementOverhaul\\ModEntry.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\ModEntry.cs",
               "RelativeToolTip": "MovementOverhaul\\ModEntry.cs",
-              "ViewState": "AgIAANcAAAAAAAAAAAAiwOsAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAANUAAAAAAAAAAAAEwOIAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-07-29T09:12:17.402Z",
               "EditorCaption": ""
@@ -74,7 +73,7 @@
               "RelativeDocumentMoniker": "MovementOverhaul\\NPC.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\NPC.cs",
               "RelativeToolTip": "MovementOverhaul\\NPC.cs",
-              "ViewState": "AgIAABABAAAAAAAAAAAiwB0BAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAACsAAAAAAAAAAAAIwDcAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-11T02:34:43.3Z",
               "EditorCaption": ""

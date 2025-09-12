@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using HarmonyLib;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -14,19 +15,6 @@ namespace MovementOverhaul
 {
     public class NpcLogic
     {
-        private class PausedNpcState
-        {
-            public readonly NPC Npc;
-            public readonly PathFindController? OriginalController;
-            public float PauseTimer;
-
-            public PausedNpcState(NPC npc, float duration)
-            {
-                this.Npc = npc;
-                this.OriginalController = npc.controller;
-                this.PauseTimer = duration;
-            }
-        }
         private class AnnoyanceState
         {
             public int WhistleCount { get; set; } = 0;
@@ -39,8 +27,6 @@ namespace MovementOverhaul
         private readonly IManifest ModManifest;
         private int originalPetSpeed = -1;
         private readonly Dictionary<string, AnnoyanceState> npcAnnoyanceTracker = new();
-
-        private readonly List<NPC> _pausedNpcs = new();
 
         public NpcLogic(IModHelper helper, IMonitor monitor, IMultiplayerHelper multiplayer, IManifest manifest)
         {
@@ -55,42 +41,8 @@ namespace MovementOverhaul
             if (!ModEntry.Config.EnableWhistle || !Context.IsWorldReady || !Context.CanPlayerMove || e.Button != ModEntry.Config.WhistleKey)
                 return;
 
-            // This method only plays the sound for the local player.
-            this.PlayLocalWhistleSound();
-
-            // Execute the whistle logic for the local player.
-            this.PerformWhistle(Game1.player);
-
-            // Send a message to other players to also execute the logic.
-            if (Context.IsMultiplayer)
-            {
-                this.Multiplayer.SendMessage(
-                    new WhistleMessage(Game1.player.UniqueMultiplayerID),
-                    "WhistleCommand",
-                    modIDs: new[] { this.ModManifest.UniqueID }
-                );
-            }
-
-            // Start the local animation and send sync message.
+            // This logic has been simplified and corrected to avoid duplicate calls.
             this.StartWhistleAnimation(Game1.player);
-            if (Context.IsMultiplayer)
-            {
-                this.Multiplayer.SendMessage(new WhistleAnimationMessage(Game1.player.UniqueMultiplayerID), "PlayWhistleAnimation", modIDs: new[] { this.ModManifest.UniqueID });
-            }
-
-            // The rest of the whistle logic is now in a delayed action to play after the animation starts.
-            Game1.delayedActions.Add(new DelayedAction(250, () =>
-            {
-                this.PerformWhistle(Game1.player);
-                if (Context.IsMultiplayer)
-                {
-                    this.Multiplayer.SendMessage(
-                        new WhistleMessage(Game1.player.UniqueMultiplayerID),
-                        "WhistleCommand",
-                        modIDs: new[] { this.ModManifest.UniqueID }
-                    );
-                }
-            }));
         }
 
         public void HandleRemoteWhistleAnimation(long playerID)
@@ -102,23 +54,6 @@ namespace MovementOverhaul
             }
         }
 
-        public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
-        {
-            if (!Context.IsWorldReady) return;
-
-            // --- Paused NPC Countdown ---
-            if (this._pausedNpcs.Any())
-            {
-                // This logic is simple: if an NPC is paused, we just re-apply Halt()
-                // The timer is handled in the DelayedAction when they are paused.
-                foreach (var npc in this._pausedNpcs)
-                {
-                    npc.Halt();
-                }
-            }
-        }
-
-        // This method is called by remote clients when they receive a whistle message.
         public void HandleRemoteWhistle(long playerID)
         {
             Farmer? whistler = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerID);
@@ -128,14 +63,8 @@ namespace MovementOverhaul
                 {
                     Game1.playSound("whistle");
                 }
-
                 this.PerformWhistle(whistler);
             }
-        }
-        // A dedicated method for handling the local player's whistle sound.
-        private void PlayLocalWhistleSound()
-        {
-            Game1.soundBank.PlayCue("whistle");
         }
 
         // This is the core logic, now shared by local and remote players.
@@ -193,36 +122,29 @@ namespace MovementOverhaul
                     if (npc.IsMonster || !npc.IsVillager || Vector2.Distance(whistler.Tile, npc.Tile) > 10)
                         continue;
 
-                    // Get or create the annoyance state for this NPC.
                     if (!this.npcAnnoyanceTracker.TryGetValue(npc.Name, out var annoyanceState))
                     {
                         annoyanceState = new AnnoyanceState();
                         this.npcAnnoyanceTracker[npc.Name] = annoyanceState;
                     }
 
-                    npc.facePlayer(whistler);
-                    this.PauseNpc(npc, 1.5f);
-
-                    // If we've already lost friendship today, just show the angry emote.
                     if (annoyanceState.HasLostFriendshipToday)
                     {
-                        npc.doEmote(12); // Angry emote
+                        npc.doEmote(40); // "..." emote
                         continue;
                     }
 
-                    // Otherwise, increment the whistle count.
                     annoyanceState.WhistleCount++;
 
-                    if (annoyanceState.WhistleCount >= 3)
+                    if (annoyanceState.WhistleCount > ModEntry.Config.WhistleNumberBeforeAnnoying)
                     {
-                        // Third whistle: lose friendship and get angry.
                         whistler.changeFriendship(-ModEntry.Config.WhistleFriendshipPenalty, npc);
                         npc.doEmote(12); // Angry emote
                         annoyanceState.HasLostFriendshipToday = true;
                     }
                     else
                     {
-                        npc.doEmote(16); // ! emote
+                        npc.doEmote(16); // '!' emote in your code, assuming this is correct
                     }
                 }
             }
@@ -242,47 +164,35 @@ namespace MovementOverhaul
                 }
             }
         }
-        private void PauseNpc(NPC npc, float durationSeconds)
-        {
-            if (this._pausedNpcs.Contains(npc)) return;
-
-            this._pausedNpcs.Add(npc);
-            npc.Halt();
-
-            // Create a delayed action to un-pause the NPC later.
-            Game1.delayedActions.Add(new DelayedAction((int)(durationSeconds * 1000), () =>
-            {
-                if (this._pausedNpcs.Contains(npc))
-                {
-                    this._pausedNpcs.Remove(npc);
-                }
-            }));
-        }
 
         private void StartWhistleAnimation(Farmer who)
         {
-            // If already performing an action, don't play the animation.
             if (!who.CanMove) return;
 
             who.faceDirection(2);
-            who.jump(4);
             who.canMove = false;
+            Game1.soundBank.PlayCue("whistle");
             FarmerSprite.AnimationFrame[] frames = new FarmerSprite.AnimationFrame[]
             {
                 new FarmerSprite.AnimationFrame(67, 100),
-                new FarmerSprite.AnimationFrame(26, 100),
+                new FarmerSprite.AnimationFrame(26, 200),
                 new FarmerSprite.AnimationFrame(16, 100),
             };
 
-            // After the animation is done, allow the player to move again.
-            who.FarmerSprite.animateOnce(frames, (f) => f.canMove = true);
+            who.FarmerSprite.animateOnce(frames, (f) => {
+                f.canMove = true;
+                // The whistle logic now runs after the animation is complete for the local player.
+                if (who.IsLocalPlayer)
+                {
+                    this.PerformWhistle(who);
+                    if (Context.IsMultiplayer)
+                    {
+                        this.Multiplayer.SendMessage(new WhistleMessage(who.UniqueMultiplayerID), "WhistleCommand", modIDs: new[] { this.ModManifest.UniqueID });
+                    }
+                }
+            });
         }
 
-
-        public void ResetState()
-        {
-            this._pausedNpcs.Clear();
-        }
         public void ResetDailyState()
         {
             foreach (var state in this.npcAnnoyanceTracker.Values)
@@ -346,4 +256,43 @@ namespace MovementOverhaul
             return null;
         }
     }
+
+    [HarmonyPatch(typeof(NPC), nameof(NPC.update), new Type[] { typeof(GameTime), typeof(GameLocation) })]
+    public class NPC_Update_Patch
+    {
+        /// <summary>
+        /// This Postfix patch runs AFTER the NPC's normal AI update.
+        /// It checks if the NPC is "running late" and adjusts their speed accordingly.
+        /// </summary>
+        public static void Postfix(NPC __instance, GameTime time, GameLocation location)
+        {
+            try
+            {
+                if (!ModEntry.Config.EnableRunningLate || !__instance.IsVillager || __instance.controller == null)
+                    return;
+
+                // Check if the NPC is following a schedule path
+                if (__instance.controller.pathToEndPoint != null && __instance.controller.pathToEndPoint.Count > 0)
+                {
+                    Point finalDestination = __instance.controller.pathToEndPoint.Last();
+                    float distance = Vector2.Distance(__instance.Tile, new Vector2(finalDestination.X, finalDestination.Y));
+
+                    // If they are far away (more than specified tiles), make them move faster.
+                    if (distance > ModEntry.Config.DistanceConsideredFar)
+                    {
+                        __instance.speed = 4; // Faster than normal walking speed (2)
+                    }
+                    else
+                    {
+                        __instance.speed = 2; // Reset to normal speed
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModEntry.SMonitor.Log($"Failed in {nameof(NPC_Update_Patch)}:\n{ex}", LogLevel.Error);
+            }
+        }
+    }
+
 }
