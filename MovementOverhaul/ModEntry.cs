@@ -488,80 +488,34 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-animspeed.name"), tooltip: () => this.Helper.Translation.Get("config.enable-animspeed.tooltip"), getValue: () => Config.AdaptiveAnimationSpeed, setValue: value => Config.AdaptiveAnimationSpeed = value);
 
             // COMBAT SETTINGS
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Combat Settings");
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Dash Attack", tooltip: () => "If enabled, attacking while sprinting performs a dashing attack.", getValue: () => Config.EnableDashAttack, setValue: value => Config.EnableDashAttack = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dash Attack Stamina Cost", tooltip: () => "How much stamina the dash attack costs.", min: 0f, max: 20f, interval: 1f, getValue: () => Config.DashAttackStaminaCost, setValue: value => Config.DashAttackStaminaCost = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dash Attack Damage Multiplier", tooltip: () => "The damage multiplier for the dash attack (e.g., 1.5 for 50% bonus damage).", min: 1.0f, max: 3.0f, interval: 0.05f, getValue: () => Config.DashAttackDamageMultiplier, setValue: value => Config.DashAttackDamageMultiplier = value);
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Sprint Attack Grace Period",
-                tooltip: () => "The timing window (in seconds) for a sprint attack to trigger after you stop sprinting. Increase if activation feels unreliable.",
-                min: 0.1f, max: 0.5f, interval: 0.05f,
-                getValue: () => Config.SprintAttackGracePeriod,
-                setValue: value => Config.SprintAttackGracePeriod = value);
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Enable Dash Cooldown",
-                tooltip: () => "If enabled, the dash attack will have a cooldown period after use.",
-                getValue: () => Config.EnableDashAttackCooldown,
-                setValue: value => Config.EnableDashAttackCooldown = value
-            );
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Sword Cooldown", tooltip: () => "Cooldown for Sword dash attacks.", min: 0.5f, max: 10f, interval: 0.25f, getValue: () => Config.SwordDashCooldown, setValue: value => Config.SwordDashCooldown = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Dagger Cooldown", tooltip: () => "Cooldown for Dagger dash attacks.", min: 0.25f, max: 10f, interval: 0.25f, getValue: () => Config.DaggerDashCooldown, setValue: value => Config.DaggerDashCooldown = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Club/Hammer Cooldown", tooltip: () => "Cooldown for Club and Hammer dash attacks.", min: 1.0f, max: 10f, interval: 0.25f, getValue: () => Config.ClubDashCooldown, setValue: value => Config.ClubDashCooldown = value);
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Jump Attack", tooltip: () => "If enabled, attacking while in the air grants a temporary damage buff.", getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Jump Attack Damage Bonus", tooltip: () => "The flat Attack bonus added to a jump attack. +2 is like eating a food buff.", min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.combat-section.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-dash.name"), tooltip: () => this.Helper.Translation.Get("config.enable-dash.tooltip"), getValue: () => Config.EnableDashAttack, setValue: value => Config.EnableDashAttack = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-stamina.name"), tooltip: () => this.Helper.Translation.Get("config.dash-stamina.tooltip"), min: 0f, max: 20f, interval: 1f, getValue: () => Config.DashAttackStaminaCost, setValue: value => Config.DashAttackStaminaCost = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-damage.name"), tooltip: () => this.Helper.Translation.Get("config.dash-damage.tooltip"), min: 1.0f, max: 3.0f, interval: 0.05f, getValue: () => Config.DashAttackDamageMultiplier, setValue: value => Config.DashAttackDamageMultiplier = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-grace-period.name"), tooltip: () => this.Helper.Translation.Get("config.dash-grace-period.tooltip"), min: 0.1f, max: 0.5f, interval: 0.05f, getValue: () => Config.SprintAttackGracePeriod, setValue: value => Config.SprintAttackGracePeriod = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-dash-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.enable-dash-cooldown.tooltip"), getValue: () => Config.EnableDashAttackCooldown, setValue: value => Config.EnableDashAttackCooldown = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sword-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.sword-cooldown.tooltip"), min: 0.5f, max: 10f, interval: 0.25f, getValue: () => Config.SwordDashCooldown, setValue: value => Config.SwordDashCooldown = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dagger-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.dagger-cooldown.tooltip"), min: 0.25f, max: 10f, interval: 0.25f, getValue: () => Config.DaggerDashCooldown, setValue: value => Config.DaggerDashCooldown = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.club-hammer-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.club-hammer-cooldown.tooltip"), min: 1.0f, max: 10f, interval: 0.25f, getValue: () => Config.ClubDashCooldown, setValue: value => Config.ClubDashCooldown = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-jump-attack.name"), tooltip: () => this.Helper.Translation.Get("config.enable-jump-attack.tooltip"), getValue: () => Config.EnableJumpAttack, setValue: value => Config.EnableJumpAttack = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.jump-attack-damage.name"), tooltip: () => this.Helper.Translation.Get("config.jump-attack-damage.tooltip"), min: 1, max: 10, interval: 1, getValue: () => Config.JumpAttackDamageMultiplier, setValue: value => Config.JumpAttackDamageMultiplier = value);
 
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "Whistle Command");
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Enable Whistle", tooltip: () => "If enabled, you can press a key to call your pet and high-friendship animals to you.", getValue: () => Config.EnableWhistle, setValue: value => Config.EnableWhistle = value);
-            configMenu.AddKeybind(mod: this.ModManifest, name: () => "Whistle Key", tooltip: () => "The key to press to call your animals.", getValue: () => Config.WhistleKey, setValue: value => Config.WhistleKey = value);
-            configMenu.AddNumberOption(mod: this.ModManifest, name: () => "Animal Call Min Hearts", tooltip: () => "The minimum friendship level required for a farm animal to respond to your whistle.", min: 0, max: 5, interval: 1, getValue: () => Config.WhistleAnimalMinHearts, setValue: value => Config.WhistleAnimalMinHearts = value);
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Whistle Attracts Monsters (May be buggy)",
-                tooltip: () => "If enabled, using the whistle in a dangerous location will attract all nearby monsters.",
-                getValue: () => Config.WhistleAggrosMonsters,
-                setValue: value => Config.WhistleAggrosMonsters = value
-            );
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Hear Others' Whistles",
-                tooltip: () => "If enabled, you will hear the sound effect when other players use their whistle.",
-                getValue: () => Config.HearRemoteWhistles,
-                setValue: value => Config.HearRemoteWhistles = value
-            );
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "NPC Pause after hearing Whistle",
-                tooltip: () => "How many seconds a NPC will pause after hearing a whistle.",
-                min: 0f, max: 10f, interval: 0.5f,
-                getValue: () => Config.NPCPauseFromWhistle,
-                setValue: value => Config.NPCPauseFromWhistle = value
-            );
-            configMenu.AddBoolOption(mod: this.ModManifest,
-                name: () => "Whistle Annoys NPCs",
-                tooltip: () => "If enabled, whistling near villagers will make them react. Whistling too often will annoy them.",
-                getValue: () => Config.WhistleAnnoysNPCs,
-                setValue: value => Config.WhistleAnnoysNPCs = value
-            );
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Number of tolerable whistling for NPCs",
-                tooltip: () => "How many whistling a NPC can tolerate before it becomes annoying.",
-                min: 0, max: 20, interval: 1,
-                getValue: () => Config.WhistleNumberBeforeAnnoying,
-                setValue: value => Config.WhistleNumberBeforeAnnoying = value
-            );
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Annoyance Friendship Penalty",
-                tooltip: () => "How much friendship you lose for whistling at an already-annoyed NPC.",
-                min: 0, max: 50, interval: 5,
-                getValue: () => Config.WhistleFriendshipPenalty,
-                setValue: value => Config.WhistleFriendshipPenalty = value
-            );
-            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => "NPC Movement");
-            configMenu.AddBoolOption(mod: this.ModManifest, name: () => "Running Late Behavior", tooltip: () => "If enabled, NPCs will walk faster if they are far away from their destination.", getValue: () => Config.EnableRunningLate, setValue: value => Config.EnableRunningLate = value);
-            configMenu.AddNumberOption(mod: this.ModManifest,
-                name: () => "Distance considered far for NPC.",
-                tooltip: () => "How much tiles is considered far for an NPC for them to start running. (Example: 20 means NPC will run until reaching 20 tiles near their destination)",
-                min: 0, max: 500, interval: 10,
-                getValue: () => Config.DistanceConsideredFar,
-                setValue: value => Config.DistanceConsideredFar = value
-            );
+            // WHISTLE
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.whistle-section.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-whistle.name"), tooltip: () => this.Helper.Translation.Get("config.enable-whistle.tooltip"), getValue: () => Config.EnableWhistle, setValue: value => Config.EnableWhistle = value);
+            configMenu.AddKeybind(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-key.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-key.tooltip"), getValue: () => Config.WhistleKey, setValue: value => Config.WhistleKey = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.animal-min-hearts.name"), tooltip: () => this.Helper.Translation.Get("config.animal-min-hearts.tooltip"), min: 0, max: 5, interval: 1, getValue: () => Config.WhistleAnimalMinHearts, setValue: value => Config.WhistleAnimalMinHearts = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-attracts-monsters.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-attracts-monsters.tooltip"), getValue: () => Config.WhistleAggrosMonsters, setValue: value => Config.WhistleAggrosMonsters = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.hear-others-whistles.name"), tooltip: () => this.Helper.Translation.Get("config.hear-others-whistles.tooltip"), getValue: () => Config.HearRemoteWhistles, setValue: value => Config.HearRemoteWhistles = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.npc-pause-duration.name"), tooltip: () => this.Helper.Translation.Get("config.npc-pause-duration.tooltip"), min: 0f, max: 10f, interval: 0.5f, getValue: () => Config.NPCPauseFromWhistle, setValue: value => Config.NPCPauseFromWhistle = value);
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-annoys-npcs.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-annoys-npcs.tooltip"), getValue: () => Config.WhistleAnnoysNPCs, setValue: value => Config.WhistleAnnoysNPCs = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-tolerance.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-tolerance.tooltip"), min: 0, max: 20, interval: 1, getValue: () => Config.WhistleNumberBeforeAnnoying, setValue: value => Config.WhistleNumberBeforeAnnoying = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.annoyance-penalty.name"), tooltip: () => this.Helper.Translation.Get("config.annoyance-penalty.tooltip"), min: 0, max: 50, interval: 5, getValue: () => Config.WhistleFriendshipPenalty, setValue: value => Config.WhistleFriendshipPenalty = value);
+
+            // NPC MOVEMENT
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.npc-movement-section.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.running-late.name"), tooltip: () => this.Helper.Translation.Get("config.running-late.tooltip"), getValue: () => Config.EnableRunningLate, setValue: value => Config.EnableRunningLate = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.far-distance.name"), tooltip: () => this.Helper.Translation.Get("config.far-distance.tooltip"), min: 0, max: 500, interval: 10, getValue: () => Config.DistanceConsideredFar, setValue: value => Config.DistanceConsideredFar = value);
         }
     }
 }

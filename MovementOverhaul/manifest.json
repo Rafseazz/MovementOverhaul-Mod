@@ -2,7 +2,7 @@
 	"Name": "Movement Overhaul",
 	"Author": "Rafseazz",
 	"Version": "1.0.0",
-	"Description": "Adds immersive jumping and sprinting abilities.",
+	"Description": "Adds immersive jumping, sprinting, sitting, dashing, whistling, and many more!",
 	"UniqueID": "Rafseazz.MovementOverhaul",
 	"EntryDll": "MovementOverhaul.dll",
 	"MinimumApiVersion": "4.0.0",

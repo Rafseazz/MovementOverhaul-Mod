@@ -228,6 +228,7 @@ namespace MovementOverhaul
 
             who.faceDirection(2);
             who.canMove = false;
+            who.synchronizedJump(3);
             Game1.soundBank.PlayCue("whistle");
             FarmerSprite.AnimationFrame[] frames = new FarmerSprite.AnimationFrame[]
             {
