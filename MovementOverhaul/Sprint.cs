@@ -52,17 +52,20 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableSprint) return;
+            if (!ModEntry.Instance.Config.EnableSprint) return;
 
-            switch (ModEntry.Config.SprintActivation)
+            //ModEntry.Instance.LogDebug($"Button pressed: {e.Button}. Current sprint mode: {ModEntry.Instance.Config.SprintActivation}."); //debug
+
+            switch (ModEntry.Instance.Config.SprintActivation)
             {
                 case SprintMode.DoubleTap:
                     this.HandleKeyboardDoubleTap(e.Button);
                     break;
                 case SprintMode.Toggle:
-                    if (e.Button == ModEntry.Config.SprintKey)
+                    if (e.Button == ModEntry.Instance.Config.SprintKey)
                     {
                         this.isToggleSprintOn = !this.isToggleSprintOn;
+                        ModEntry.Instance.LogDebug($"Sprint toggle key pressed. New toggle state: {this.isToggleSprintOn}."); //debug
                         if (this.isToggleSprintOn) this.ActivateSprint();
                         else this.StopSprint();
                     }
@@ -76,17 +79,27 @@ namespace MovementOverhaul
                 return;
 
             uint currentTime = (uint)Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
+            uint timeSinceLastTap = currentTime - this.lastKeyPressTime;
 
             if (button == this.lastMoveKeyPressed && currentTime - this.lastKeyPressTime < TapTimeThreshold)
+            {
                 this.tapCount++;
+                ModEntry.Instance.LogDebug($"Tap registered for '{button}'. Time since last: {timeSinceLastTap}ms. Tap count: {this.tapCount}."); //debug
+            }
             else
+            {
                 this.tapCount = 1;
+                //ModEntry.Instance.LogDebug($"First tap registered for '{button}'. Resetting tap count."); //debug
+            }
 
             this.lastMoveKeyPressed = button;
             this.lastKeyPressTime = currentTime;
 
             if (this.tapCount == 2 && !this.IsSprinting)
+            {
+                ModEntry.Instance.LogDebug("Double-tap confirmed. Activating sprint."); //debug
                 this.ActivateSprint();
+            }
         }
 
         private void HandleControllerDoubleTap()
@@ -126,13 +139,13 @@ namespace MovementOverhaul
                 this.timeSinceSprintStopped += (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
             }
 
-            if (!ModEntry.Config.EnableSprint)
+            if (!ModEntry.Instance.Config.EnableSprint)
             {
                 if (this.IsSprinting) this.StopSprint();
                 return;
             }
 
-            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.DoubleTap)
             {
                 this.HandleControllerDoubleTap();
             }
@@ -143,7 +156,7 @@ namespace MovementOverhaul
                 return;
             }
 
-            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.DoubleTap)
             {
                 if (this.IsSprinting)
                 {
@@ -153,18 +166,25 @@ namespace MovementOverhaul
             }
 
             bool shouldBeSprinting = false;
-            if (ModEntry.Config.SprintActivation == SprintMode.Hold)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.Hold)
             {
-                shouldBeSprinting = this.Helper.Input.IsDown(ModEntry.Config.SprintKey);
+                shouldBeSprinting = this.Helper.Input.IsDown(ModEntry.Instance.Config.SprintKey);
             }
-            else if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+            else if (ModEntry.Instance.Config.SprintActivation == SprintMode.Toggle)
             {
                 shouldBeSprinting = this.isToggleSprintOn;
             }
 
-            if (shouldBeSprinting && !this.IsSprinting) this.ActivateSprint();
-            else if (!shouldBeSprinting && this.IsSprinting) this.StopSprint();
-
+            if (shouldBeSprinting && !this.IsSprinting)
+            {
+                ModEntry.Instance.LogDebug($"'{ModEntry.Instance.Config.SprintActivation}' mode condition met. Activating sprint.");
+                this.ActivateSprint();
+            }
+            else if (!shouldBeSprinting && this.IsSprinting)
+            {
+                ModEntry.Instance.LogDebug($"'{ModEntry.Instance.Config.SprintActivation}' mode condition no longer met. Stopping sprint.");
+                this.StopSprint();
+            }
             if (this.IsSprinting)
             {
                 this.HandleActiveSprint((float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds);
@@ -173,11 +193,12 @@ namespace MovementOverhaul
 
         private void HandleActiveSprint(float elapsedSeconds)
         {
-            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.DoubleTap)
             {
                 this.sprintTimer -= elapsedSeconds;
                 if (this.sprintTimer <= 0)
                 {
+                    ModEntry.Instance.LogDebug("Double-tap sprint timer expired. Stopping sprint.");
                     this.StopSprint();
                     return;
                 }
@@ -185,6 +206,7 @@ namespace MovementOverhaul
 
             if (Game1.player.stamina <= 1)
             {
+                ModEntry.Instance.LogDebug($"Player out of stamina ({Game1.player.stamina}). Stopping sprint.");
                 this.StopSprint();
                 return;
             }
@@ -195,10 +217,11 @@ namespace MovementOverhaul
                 if (this.staminaDrainTimer <= 0)
                 {
                     this.staminaDrainTimer = 1f;
-                    bool freeSprint = Game1.player.isRidingHorse() && ModEntry.Config.NoStaminaDrainOnHorse;
+                    bool freeSprint = Game1.player.isRidingHorse() && ModEntry.Instance.Config.NoStaminaDrainOnHorse;
                     if (!freeSprint)
                     {
-                        float cost = ModEntry.Config.SprintStaminaCostPerSecond;
+                        float cost = ModEntry.Instance.Config.SprintStaminaCostPerSecond;
+                        ModEntry.Instance.LogDebug($"Draining {cost} stamina. Current: {Game1.player.stamina}.");
                         Game1.player.stamina = Math.Max(0, Game1.player.stamina - cost);
                     }
                 }
@@ -207,10 +230,10 @@ namespace MovementOverhaul
                 if (this.particleEffectTimer <= 0)
                 {
                     this.particleEffectTimer = 0.1f;
-                    if (ModEntry.Config.SprintParticleEffect != "None")
+                    if (ModEntry.Instance.Config.SprintParticleEffect != "None")
                     {
-                        this.Multiplayer.SendMessage(new SprintParticleMessage(Game1.player.UniqueMultiplayerID, ModEntry.Config.SprintParticleEffect), "CreateSprintParticle", modIDs: new[] { this.ModManifest.UniqueID });
-                        this.CreateParticle(Game1.player, ModEntry.Config.SprintParticleEffect);
+                        this.Multiplayer.SendMessage(new SprintParticleMessage(Game1.player.UniqueMultiplayerID, ModEntry.Instance.Config.SprintParticleEffect), "CreateSprintParticle", modIDs: new[] { this.ModManifest.UniqueID });
+                        this.CreateParticle(Game1.player, ModEntry.Instance.Config.SprintParticleEffect);
                     }
                 }
 
@@ -230,17 +253,19 @@ namespace MovementOverhaul
         {
             if (Game1.player.stamina <= 1)
             {
-                if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+                ModEntry.Instance.LogDebug($"Sprint activation failed: Not enough stamina ({Game1.player.stamina}).");
+                if (ModEntry.Instance.Config.SprintActivation == SprintMode.Toggle)
                     this.isToggleSprintOn = false;
                 return;
             }
 
+            ModEntry.Instance.LogDebug("Sprint activated! WEEEEEE");
             this.IsSprinting = true;
             this.staminaDrainTimer = 0.5f;
 
-            if (ModEntry.Config.SprintActivation == SprintMode.DoubleTap)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.DoubleTap)
             {
-                this.sprintTimer = ModEntry.Config.SprintDurationSeconds;
+                this.sprintTimer = ModEntry.Instance.Config.SprintDurationSeconds;
             }
 
             Game1.playSound("hoeHit");
@@ -248,12 +273,15 @@ namespace MovementOverhaul
 
         private void StopSprint()
         {
+            if (!this.IsSprinting) return;
+
+            ModEntry.Instance.LogDebug("Stopped spriting Aww");
             this.IsSprinting = false;
             this.timeSinceSprintStopped = 0f;
             this.tapCount = 0;
             this.lastControllerDirection = -1;
 
-            if (ModEntry.Config.SprintActivation == SprintMode.Toggle)
+            if (ModEntry.Instance.Config.SprintActivation == SprintMode.Toggle)
             {
                 this.isToggleSprintOn = false;
                 Game1.playSound("woodyStep");
@@ -268,25 +296,25 @@ namespace MovementOverhaul
         public bool WasSprintingRecently()
         {
             // Sprint is active if currently sprinting OR if the grace period (0.2s) hasn't passed.
-            return this.IsSprinting || this.timeSinceSprintStopped < ModEntry.Config.SprintAttackGracePeriod; 
+            return this.IsSprinting || this.timeSinceSprintStopped < ModEntry.Instance.Config.SprintAttackGracePeriod; 
         }
 
 
         public float GetSpeedMultiplier()
         {
-            if (!ModEntry.Config.EnableSprint || !this.IsSprinting)
+            if (!ModEntry.Instance.Config.EnableSprint || !this.IsSprinting)
                 return 1f;
 
             float multiplier = Game1.player.isRidingHorse()
-                ? ModEntry.Config.HorseSprintSpeedMultiplier
-                : ModEntry.Config.SprintSpeedMultiplier;
+                ? ModEntry.Instance.Config.HorseSprintSpeedMultiplier
+                : ModEntry.Instance.Config.SprintSpeedMultiplier;
 
-            if (ModEntry.Config.PathSpeedBonus && Game1.player.isMoving())
+            if (ModEntry.Instance.Config.PathSpeedBonus && Game1.player.isMoving())
             {
                 string tileType = Game1.currentLocation.doesTileHaveProperty((int)Game1.player.Tile.X, (int)Game1.player.Tile.Y, "Type", "Back");
                 if (tileType is "Wood" or "Stone")
                 {
-                    multiplier *= ModEntry.Config.PathSpeedBonusMultiplier;
+                    multiplier *= ModEntry.Instance.Config.PathSpeedBonusMultiplier;
                 }
             }
 
@@ -348,7 +376,13 @@ namespace MovementOverhaul
         {
             if (__instance.IsLocalPlayer && ModEntry.SprintLogic != null)
             {
-                __result *= ModEntry.SprintLogic.GetSpeedMultiplier();
+                float originalSpeed = __result;
+                float multiplier = ModEntry.SprintLogic.GetSpeedMultiplier();
+                if (multiplier > 1f)
+                {
+                    __result *= multiplier;
+                    //ModEntry.Instance.LogDebug($"[Harmony] Patched speed for {__instance.Name}. Original: {originalSpeed:F2}, Multiplier: {multiplier:F2}, Final: {__result:F2}");
+                }
             }
         }
     }

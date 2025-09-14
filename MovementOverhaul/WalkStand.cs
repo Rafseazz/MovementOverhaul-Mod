@@ -28,7 +28,11 @@ namespace MovementOverhaul
                 || ModEntry.SprintLogic.IsSprinting
                 || ModEntry.SitLogic.IsSittingOnGround)
             {
-                // Reset state if conditions aren't met
+                // Only log if we were just in a regen state, to indicate why it stopped.
+                if (this.wasInRegenStateLastTick)
+                {
+                    ModEntry.Instance.LogDebug("Player is no longer in a valid regen state (sprinting, sitting, full stamina, etc). Stopping regen.");
+                }
                 this.wasInRegenStateLastTick = false;
                 return;
             }
@@ -38,12 +42,14 @@ namespace MovementOverhaul
             bool isStandingStill = !Game1.player.isMoving();
 
             // Determine if the player is in any valid state for passive regeneration.
-            bool isInRegenStateThisTick = (isSlowWalking && ModEntry.Config.RegenStaminaOnWalk) || (isStandingStill && ModEntry.Config.RegenStaminaOnStand);
+            bool isInRegenStateThisTick = (isSlowWalking && ModEntry.Instance.Config.RegenStaminaOnWalk) || (isStandingStill && ModEntry.Instance.Config.RegenStaminaOnStand);
 
             // If the player just entered a regen state, start the delay timer.
             if (isInRegenStateThisTick && !this.wasInRegenStateLastTick)
             {
-                this.delayTimer = ModEntry.Config.WalkStandRegenDelaySeconds;
+                string state = isSlowWalking ? "Walking" : "Standing";
+                ModEntry.Instance.LogDebug($"Player entered '{state}' regen state. Starting {ModEntry.Instance.Config.WalkStandRegenDelaySeconds}s delay timer.");
+                this.delayTimer = ModEntry.Instance.Config.WalkStandRegenDelaySeconds;
             }
 
             this.wasInRegenStateLastTick = isInRegenStateThisTick;
@@ -64,16 +70,17 @@ namespace MovementOverhaul
             // If the delay is over, determine the rate and apply regeneration.
             float regenRate = 0f;
             if (isSlowWalking)
-                regenRate = ModEntry.Config.WalkRegenPerSecond;
+                regenRate = ModEntry.Instance.Config.WalkRegenPerSecond;
             else if (isStandingStill)
-                regenRate = ModEntry.Config.StandRegenPerSecond;
+                regenRate = ModEntry.Instance.Config.StandRegenPerSecond;
 
             if (regenRate > 0f)
             {
                 this.regenTickTimer -= (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
                 if (this.regenTickTimer <= 0)
                 {
-                    this.regenTickTimer = 1f;
+                    this.regenTickTimer = 1f; // Reset for the next second
+                    ModEntry.Instance.LogDebug($"Regen tick: Adding {regenRate} stamina. Current: {Game1.player.stamina:F1}");
                     Game1.player.stamina = Math.Min(Game1.player.MaxStamina, Game1.player.stamina + regenRate);
                 }
             }

@@ -104,6 +104,7 @@ namespace MovementOverhaul
     public enum SprintMode { DoubleTap, Hold, Toggle }
     public class ModConfig
     {
+        public bool DebugMode { get; set; } = false;
         public bool InstantJump { get; set; } = false;
         public bool ChargeAffectsDistance { get; set; } = true;
         public bool EnableJump { get; set; } = true;
@@ -150,6 +151,7 @@ namespace MovementOverhaul
         public float WalkStandRegenDelaySeconds { get; set; } = 1.5f;
         public bool SmootherTurningAnimation { get; set; } = false;
         public bool AdaptiveAnimationSpeed { get; set; } = true;
+        public float AnimationExaggerationFactor { get; set; } = 1f;
         public bool EnableDashAttack { get; set; } = true;
         public float DashAttackDamageMultiplier { get; set; } = 1.25f; // 25% damage bonus
         public float DashAttackStaminaCost { get; set; } = 5f;
@@ -180,7 +182,8 @@ namespace MovementOverhaul
         // A dictionary to track the sitting state of all remote players.
         private static readonly Dictionary<long, SitStateMessage> _remoteSitters = new();
         public static IMonitor SMonitor { get; private set; } = null!;
-        public static ModConfig Config { get; private set; } = null!;
+        public static ModEntry Instance { get; private set; } = null!;
+        public ModConfig Config { get; private set; } = null!;
         public static bool IsHorseJumping { get; set; } = false;
         public static int CurrentHorseJumpYOffset { get; set; } = 0;
         public static Vector2 CurrentHorseJumpPosition { get; set; }
@@ -193,10 +196,21 @@ namespace MovementOverhaul
         public static AnimationLogic AnimationLogic { get; private set; } = null!;
         public static CombatLogic CombatLogic { get; private set; } = null!;
         public static NpcLogic NpcLogic { get; private set; } = null!;
+        
+        // Debugger
+        public void LogDebug(string message)
+        {
+            if (!this.Config.DebugMode)
+            {
+                return;
+            }
+            this.Monitor.Log(message, LogLevel.Debug);
+        }
 
         public override void Entry(IModHelper helper)
         {
             SMonitor = this.Monitor;
+            Instance = this;
             Config = this.Helper.ReadConfig<ModConfig>();
 
             SprintLogic = new SprintLogic(helper, helper.Multiplayer, this.ModManifest);
@@ -284,7 +298,8 @@ namespace MovementOverhaul
 
         private void HookUpJumpEvents()
         {
-            if (ModEntry.Config.InstantJump)
+
+            if (ModEntry.Instance.Config.InstantJump)
             {
                 this.Helper.Events.Input.ButtonPressed += this.OnButtonPressed_Instant_Wrapper;
             }
@@ -398,6 +413,9 @@ namespace MovementOverhaul
                     this.HookUpJumpEvents();
                 }
             );
+            // Debug Mode
+            configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.debug.title"));
+            configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-debug.name"), tooltip: () => this.Helper.Translation.Get("config.enable-debug.tooltip"), getValue: () => Config.DebugMode, setValue: value => Config.DebugMode = value);
 
             // JUMP SETTINGS
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.jump.title"));
@@ -486,6 +504,7 @@ namespace MovementOverhaul
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.animation.title"));
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-turning.name"), tooltip: () => this.Helper.Translation.Get("config.enable-turning.tooltip"), getValue: () => Config.SmootherTurningAnimation, setValue: value => Config.SmootherTurningAnimation = value);
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-animspeed.name"), tooltip: () => this.Helper.Translation.Get("config.enable-animspeed.tooltip"), getValue: () => Config.AdaptiveAnimationSpeed, setValue: value => Config.AdaptiveAnimationSpeed = value);
+            configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.animation-exag-factor.name"), tooltip: () => this.Helper.Translation.Get("config.animation-exag-factor.tooltip"), min: 0.1f, max: 5.0f, interval: 0.1f, getValue: () => Config.AnimationExaggerationFactor, setValue: value => Config.AnimationExaggerationFactor = value);
 
             // COMBAT SETTINGS
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.combat-section.title"));

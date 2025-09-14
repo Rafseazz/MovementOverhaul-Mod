@@ -44,19 +44,23 @@ namespace MovementOverhaul
         // This is the new high-priority input handler.
         public void HandleDashAttackInput(ButtonPressedEventArgs e)
         {
-            // We check for the standard attack button (left-click).
+            // Check for the standard attack button.
             if (!e.Button.IsUseToolButton() || !Context.CanPlayerMove || Game1.player.CurrentTool is not MeleeWeapon weapon)
                 return;
 
-            // This is called instantly on button press, reliably catching the sprint state.
-            if (ModEntry.Config.EnableDashAttack && ModEntry.SprintLogic.WasSprintingRecently() && !this.isDashing)
+            ModEntry.Instance.LogDebug($"Attack input detected. Sprinting recently: {ModEntry.SprintLogic.WasSprintingRecently()}. On cooldown: {this.dashCooldownTimer > 0f}.");
+
+            // Called instantly on button press, reliably(?) catching the sprint state.
+            if (ModEntry.Instance.Config.EnableDashAttack && ModEntry.SprintLogic.WasSprintingRecently() && !this.isDashing)
             {
-                if (Game1.player.stamina < ModEntry.Config.DashAttackStaminaCost)
+                if (Game1.player.stamina < ModEntry.Instance.Config.DashAttackStaminaCost)
                 {
+                    ModEntry.Instance.LogDebug("-> Dash attack aborted: Not enough stamina.");
                     Game1.playSound("cancel");
                     return;
                 }
-                Game1.player.stamina -= ModEntry.Config.DashAttackStaminaCost;
+                ModEntry.Instance.LogDebug($"-> Stamina check passed. Draining {ModEntry.Instance.Config.DashAttackStaminaCost} stamina.");
+                Game1.player.stamina -= ModEntry.Instance.Config.DashAttackStaminaCost;
 
                 this.ActivateDash(weapon);
             }
@@ -75,7 +79,10 @@ namespace MovementOverhaul
             {
                 // Stop the dash if the player is no longer swinging
                 if (!Game1.player.UsingTool)
+                {
+                    ModEntry.Instance.LogDebug("Player stopped using tool. Ending dash.");
                     this.isDashing = false;
+                }
 
                 this.dashTimer--;
 
@@ -90,11 +97,15 @@ namespace MovementOverhaul
                     this.isDashing = false;
 
                 if (this.dashTimer <= 0)
+                {
+                    ModEntry.Instance.LogDebug("Dash timer expired. Ending dash.");
                     this.isDashing = false;
+                }
 
                 // If the local dash just ended, send a stop message.
                 if (!this.isDashing)
                 {
+                    ModEntry.Instance.LogDebug("-> Local dash ended. Syncing state with other players.");
                     this.SyncDashState(false, Vector2.Zero);
                 }
 
@@ -152,6 +163,7 @@ namespace MovementOverhaul
                 {
                     if (monster != null && monster.GetBoundingBox().Intersects(damageArea) && !this.monstersHitThisDash.Contains(monster))
                     {
+                        ModEntry.Instance.LogDebug($"-> Dash attack hitting monster: {monster.Name}.");
                         int minDamage = weapon.minDamage.Value;
                         int maxDamage = weapon.maxDamage.Value;
 
@@ -165,12 +177,13 @@ namespace MovementOverhaul
         public bool CheckAndBlockCooldown(ButtonPressedEventArgs e)
         {
             // We only care about the standard attack button.
-            if (!e.Button.IsUseToolButton() || !ModEntry.Config.EnableDashAttackCooldown)
+            if (!e.Button.IsUseToolButton() || !ModEntry.Instance.Config.EnableDashAttackCooldown)
                 return false;
 
             // If the cooldown is active and the player is trying to dash, block it.
             if (this.dashCooldownTimer > 0f && ModEntry.SprintLogic.WasSprintingRecently())
             {
+                ModEntry.Instance.LogDebug($"Bruh chill. Dash attack blocked by cooldown. Time remaining: {this.dashCooldownTimer:F2}s.");
                 Game1.playSound("cancel");
                 return true; // Block this input.
             }
@@ -181,35 +194,42 @@ namespace MovementOverhaul
         public void ActivateDash(MeleeWeapon weapon)
         {
             if (this.isDashing) return;
+            ModEntry.Instance.LogDebug("DASH ATTACK ACTIVATE WOOSH WOOSH");
+
             this.isDashing = true;
             this.dashTimer = 10; // Duration of the forward movement
             this.dashDirection = ModEntry.GetDirectionVectorFromFacing(Game1.player.FacingDirection);
 
             // Clear the list of hit monsters at the start of each dash.
             this.monstersHitThisDash.Clear();
+            ModEntry.Instance.LogDebug("-> Hit monster list cleared.");
 
             Game1.playSound("daggerswipe");
             // Send message to other players that our dash has started.
             this.SyncDashState(true, this.dashDirection);
 
             // Start the cooldown timer.
-            if (ModEntry.Config.EnableDashAttackCooldown)
+            if (ModEntry.Instance.Config.EnableDashAttackCooldown)
             {
                 // Set the cooldown based on the weapon type.
                 this.dashCooldownTimer = weapon.type.Value switch
                 {
-                    0 => ModEntry.Config.SwordDashCooldown,       // 0 = Sword
-                    3 => ModEntry.Config.SwordDashCooldown,       // 3 = Defensive Sword
-                    1 => ModEntry.Config.DaggerDashCooldown,      // 1 = Dagger
-                    2 => ModEntry.Config.ClubDashCooldown,        // 2 = Club/Hammer
+                    0 => ModEntry.Instance.Config.SwordDashCooldown,       // 0 = Sword
+                    3 => ModEntry.Instance.Config.SwordDashCooldown,       // 3 = Defensive Sword
+                    1 => ModEntry.Instance.Config.DaggerDashCooldown,      // 1 = Dagger
+                    2 => ModEntry.Instance.Config.ClubDashCooldown,        // 2 = Club/Hammer
                     _ => 1.5f                                     // Default fallback
                 };
+                ModEntry.Instance.LogDebug($"-> Cooldown started: {this.dashCooldownTimer:F2}s for weapon type {weapon.type.Value}.");
             }
         }
 
         // Handles incoming messages from other players.
         public void HandleRemoteDashState(DashAttackMessage msg)
         {
+            Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
+            ModEntry.Instance.LogDebug($"Received remote dash state for '{farmer?.Name ?? "Unknown"}'. IsStarting: {msg.IsStarting}.");
+
             if (msg.IsStarting)
             {
                 this._activeRemoteDashes[msg.PlayerID] = new DashState(10, msg.Direction);
@@ -225,6 +245,7 @@ namespace MovementOverhaul
         private void SyncDashState(bool isStarting, Vector2 direction)
         {
             if (!Context.IsMultiplayer) return;
+            ModEntry.Instance.LogDebug($"Sending dash state sync message. IsStarting: {isStarting}.");
             var message = new DashAttackMessage(Game1.player.UniqueMultiplayerID, isStarting, direction);
             this.Multiplayer.SendMessage(message, "DashAttackStateChanged", modIDs: new[] { this.ModManifest.UniqueID });
         }
@@ -240,16 +261,18 @@ namespace MovementOverhaul
             {
                 if (who != null && who.IsLocalPlayer)
                 {
-                    if (ModEntry.Config.EnableJumpAttack && ModEntry.JumpLogic.IsJumping)
+                    if (ModEntry.Instance.Config.EnableJumpAttack && ModEntry.JumpLogic.IsJumping)
                     {
-                        minDamage = (int)(minDamage * ModEntry.Config.JumpAttackDamageMultiplier);
-                        maxDamage = (int)(maxDamage * ModEntry.Config.JumpAttackDamageMultiplier);
+                        ModEntry.Instance.LogDebug($"[Harmony] Applying jump attack damage multiplier ({ModEntry.Instance.Config.JumpAttackDamageMultiplier}x). Original: {minDamage}-{maxDamage}.");
+                        minDamage = (int)(minDamage * ModEntry.Instance.Config.JumpAttackDamageMultiplier);
+                        maxDamage = (int)(maxDamage * ModEntry.Instance.Config.JumpAttackDamageMultiplier);
                     }
 
-                    if (ModEntry.Config.EnableDashAttack && ModEntry.CombatLogic.IsPerformingDashAttack)
+                    if (ModEntry.Instance.Config.EnableDashAttack && ModEntry.CombatLogic.IsPerformingDashAttack)
                     {
-                        minDamage = (int)(minDamage * ModEntry.Config.DashAttackDamageMultiplier);
-                        maxDamage = (int)(maxDamage * ModEntry.Config.DashAttackDamageMultiplier);
+                        ModEntry.Instance.LogDebug($"[Harmony] Applying dash attack damage multiplier ({ModEntry.Instance.Config.DashAttackDamageMultiplier}x). Original: {minDamage}-{maxDamage}.");
+                        minDamage = (int)(minDamage * ModEntry.Instance.Config.DashAttackDamageMultiplier);
+                        maxDamage = (int)(maxDamage * ModEntry.Instance.Config.DashAttackDamageMultiplier);
                     }
                 }
             }
@@ -260,7 +283,7 @@ namespace MovementOverhaul
         }
     }
 
-    // This patch handles the activation of the Dash Attack.
+    // This patch handles the activation of the Dash Attack. It seems redundant but if I remove it some weird bugs occur huhu
     [HarmonyPatch(typeof(Tool), nameof(Tool.beginUsing))]
     public class Tool_BeginUsing_Patch
     {
@@ -271,18 +294,18 @@ namespace MovementOverhaul
                 if (__instance is not MeleeWeapon weapon)
                     return;
 
-                // This now checks for the "intent" flag set by the high-priority input handler.
-                if (ModEntry.Config.EnableDashAttack && who.IsLocalPlayer && ModEntry.SprintLogic.WasSprintingRecently())
+                // This checks for the "intent" flag set by the high-priority input handler.
+                if (ModEntry.Instance.Config.EnableDashAttack && who.IsLocalPlayer && ModEntry.SprintLogic.WasSprintingRecently())
                 {
                     if (ModEntry.CombatLogic.IsPerformingDashAttack)
                         return;
 
-                    if (who.stamina < ModEntry.Config.DashAttackStaminaCost)
+                    if (who.stamina < ModEntry.Instance.Config.DashAttackStaminaCost)
                     {
                         Game1.playSound("cancel");
                         return;
                     }
-                    who.stamina -= ModEntry.Config.DashAttackStaminaCost;
+                    who.stamina -= ModEntry.Instance.Config.DashAttackStaminaCost;
 
                     ModEntry.CombatLogic.ActivateDash(weapon);
                 }

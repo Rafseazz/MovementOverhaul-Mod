@@ -9,6 +9,7 @@ using StardewValley.Pathfinding;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using xTile.Dimensions;
 
 namespace MovementOverhaul
@@ -52,10 +53,10 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableWhistle || !Context.IsWorldReady || !Context.CanPlayerMove || e.Button != ModEntry.Config.WhistleKey)
+            if (!ModEntry.Instance.Config.EnableWhistle || !Context.IsWorldReady || !Context.CanPlayerMove || e.Button != ModEntry.Instance.Config.WhistleKey)
                 return;
 
-            // This logic has been simplified and corrected to avoid duplicate calls.
+            ModEntry.Instance.LogDebug("Whistle key pressed by local player. Starting animation weeee");
             this.StartWhistleAnimation(Game1.player);
         }
 
@@ -73,7 +74,7 @@ namespace MovementOverhaul
             if (!Context.IsWorldReady)
                 return;
 
-            // --- Paused NPC Countdown & State Restoration ---
+            // Paused NPC Countdown & State Restoration
             if (this._pausedNpcs.Any())
             {
                 float elapsedSeconds = (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
@@ -82,11 +83,11 @@ namespace MovementOverhaul
                     var state = this._pausedNpcs[i];
                     state.PauseTimer -= elapsedSeconds;
 
-                    //state.Npc.Halt(); // Keep them frozen
+                    //state.Npc.Halt(); // Keep them frozen (removed fixed animations yay)
 
                     if (state.PauseTimer <= 0f)
                     {
-                        // Timer is up, restore their original pathfinding controller
+                        ModEntry.Instance.LogDebug($"You can move now, '{state.Npc.Name}'");
                         state.Npc.controller = state.OriginalController;
                         this._pausedNpcs.RemoveAt(i);
                     }
@@ -98,7 +99,8 @@ namespace MovementOverhaul
             Farmer? whistler = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerID);
             if (whistler != null)
             {
-                if (ModEntry.Config.HearRemoteWhistles)
+                ModEntry.Instance.LogDebug($"Remote whistler is '{whistler.Name}' DUN DUN DUUUN");
+                if (ModEntry.Instance.Config.HearRemoteWhistles)
                 {
                     Game1.playSound("whistle");
                 }
@@ -110,17 +112,20 @@ namespace MovementOverhaul
         private void PerformWhistle(Farmer whistler)
         {
             if (whistler.currentLocation == null) return;
+            ModEntry.Instance.LogDebug($"'{whistler.Name}' is whistling at {whistler.currentLocation.Name}. What the helly!");
 
             // Call Pet (only the owner's pet will respond)
             Pet? pet = whistler.getPet();
             if (pet != null && pet.currentLocation == whistler.currentLocation)
             {
+                ModEntry.Instance.LogDebug($"-> Found pet '{pet.displayName}'. Attempting to call forth");
                 Point targetTile = this.GetRandomAdjacentOpenTile(whistler.TilePoint, whistler.currentLocation) ?? whistler.TilePoint;
                 pet.doEmote(16);
 
                 // Increase the pet's speed.
                 this.originalPetSpeed = pet.speed;
                 pet.speed = this.originalPetSpeed + 1;
+                ModEntry.Instance.LogDebug($"--> Pet speed boosted to {pet.speed}.");
 
                 // Pass the PetPathEndBehavior to reset its speed when it arrives.
                 var controller = new PathFindController(pet, whistler.currentLocation, targetTile, -1, this.PetPathEndBehavior);
@@ -130,7 +135,7 @@ namespace MovementOverhaul
                 }
                 else
                 {
-                    // If no path could be found, immediately reset the speed.
+                    ModEntry.Instance.LogDebug($"--> Could not find a path for the '{pet.displayName}'. Resetting speed");
                     pet.speed = this.originalPetSpeed;
                 }
             }
@@ -140,8 +145,9 @@ namespace MovementOverhaul
             {
                 foreach (FarmAnimal animal in farm.animals.Values)
                 {
-                    if (animal.friendshipTowardFarmer.Value >= (ModEntry.Config.WhistleAnimalMinHearts * 200))
+                    if (animal.friendshipTowardFarmer.Value >= (ModEntry.Instance.Config.WhistleAnimalMinHearts * 200))
                     {
+                        ModEntry.Instance.LogDebug($"{whistler.Name} is calling an animal. It is a {animal.type} named {animal.displayName}! What the helly.");
                         Point targetTile = this.GetRandomAdjacentOpenTile(whistler.TilePoint, farm) ?? whistler.TilePoint;
                         animal.doEmote(16);
                         var controller = new PathFindController(animal, farm, targetTile, -1, this.AnimalPathEndBehavior);
@@ -154,12 +160,14 @@ namespace MovementOverhaul
             }
 
             // NPC Annoyance Logic
-            if (ModEntry.Config.WhistleAnnoysNPCs && whistler.currentLocation is not Farm)
+            if (ModEntry.Instance.Config.WhistleAnnoysNPCs && whistler.currentLocation is not Farm)
             {
                 foreach (NPC npc in whistler.currentLocation.characters.OfType<NPC>())
                 {
                     if (npc.IsMonster || !npc.IsVillager || Vector2.Distance(whistler.Tile, npc.Tile) > 10)
                         continue;
+
+                    ModEntry.Instance.LogDebug($"-> NPC '{npc.Name}' is in range of whistle.");
 
                     if (!this.npcAnnoyanceTracker.TryGetValue(npc.Name, out var annoyanceState))
                     {
@@ -167,7 +175,7 @@ namespace MovementOverhaul
                         this.npcAnnoyanceTracker[npc.Name] = annoyanceState;
                     }
 
-                    this.PauseNpc(npc, ModEntry.Config.NPCPauseFromWhistle);
+                    this.PauseNpc(npc, ModEntry.Instance.Config.NPCPauseFromWhistle);
 
                     if (annoyanceState.HasLostFriendshipToday)
                     {
@@ -176,25 +184,28 @@ namespace MovementOverhaul
                     }
 
                     annoyanceState.WhistleCount++;
+                    ModEntry.Instance.LogDebug($"--> '{npc.Name}' has been whistled at {annoyanceState.WhistleCount} times.");
 
-                    if (annoyanceState.WhistleCount > ModEntry.Config.WhistleNumberBeforeAnnoying)
+                    if (annoyanceState.WhistleCount > ModEntry.Instance.Config.WhistleNumberBeforeAnnoying)
                     {
-                        whistler.changeFriendship(-ModEntry.Config.WhistleFriendshipPenalty, npc);
+                        ModEntry.Instance.LogDebug($"---> Annoyance threshold reached! '{npc.Name}' is now annoyed! Oh naur");
+                        whistler.changeFriendship(-ModEntry.Instance.Config.WhistleFriendshipPenalty, npc);
                         npc.doEmote(12); // Angry emote
                         annoyanceState.HasLostFriendshipToday = true;
                     }
                     else
                     {
-                        npc.doEmote(16); // '!' emote in your code, assuming this is correct
+                        npc.doEmote(16); // '!' emote
                     }
                 }
             }
 
             // Monster aggro
-            if (ModEntry.Config.WhistleAggrosMonsters && !whistler.currentLocation.IsFarm)
+            if (ModEntry.Instance.Config.WhistleAggrosMonsters && !whistler.currentLocation.IsFarm)
             {
                 foreach (Monster monster in whistler.currentLocation.characters.OfType<Monster>())
                 {
+                    ModEntry.Instance.LogDebug($"-> Monster '{monster.Name}' is being aggroed by whistle.");
                     monster.doEmote(16);
                     // This gives the monster a temporary path to the player who whistled.
                     var controller = new PathFindController(monster, whistler.currentLocation, whistler.TilePoint, -1, this.MonsterPathEndBehavior);
@@ -210,10 +221,12 @@ namespace MovementOverhaul
             var existingState = this._pausedNpcs.FirstOrDefault(p => p.Npc == npc);
             if (existingState != null)
             {
+                ModEntry.Instance.LogDebug($"-> NPC '{npc.Name}' was already paused. Resetting timer to {durationSeconds}s.");
                 existingState.PauseTimer = durationSeconds; // Reset timer if already paused
             }
             else
             {
+                ModEntry.Instance.LogDebug($"-> Pausing NPC '{npc.Name}' for {durationSeconds}s.");
                 // Add a new paused state, which saves the NPC's current controller.
                 this._pausedNpcs.Add(new PausedNpcState(npc, durationSeconds));
             }
@@ -242,9 +255,11 @@ namespace MovementOverhaul
                 // The whistle logic now runs after the animation is complete for the local player.
                 if (who.IsLocalPlayer)
                 {
+                    ModEntry.Instance.LogDebug("Local player whistle animation finished. Performing whistle logic.");
                     this.PerformWhistle(who);
                     if (Context.IsMultiplayer)
                     {
+                        ModEntry.Instance.LogDebug("Sending whistle command to other players.");
                         this.Multiplayer.SendMessage(new WhistleMessage(who.UniqueMultiplayerID), "WhistleCommand", modIDs: new[] { this.ModManifest.UniqueID });
                     }
                 }
@@ -258,6 +273,7 @@ namespace MovementOverhaul
 
         public void ResetDailyState()
         {
+            ModEntry.Instance.LogDebug("New day started. Resetting daily NPC annoyance trackers.");
             foreach (var state in this.npcAnnoyanceTracker.Values)
             {
                 state.HasLostFriendshipToday = false;
@@ -266,9 +282,9 @@ namespace MovementOverhaul
 
         private void MonsterPathEndBehavior(Character c, GameLocation location)
         {
-            // This clears the temporary pathfinding controller, allowing the monster's normal AI to take back over.
             if (c is Monster monster)
             {
+                ModEntry.Instance.LogDebug($"Monster '{monster.displayName}' reached whistle target.");
                 monster.controller = null;
             }
         }
@@ -277,6 +293,7 @@ namespace MovementOverhaul
         {
             if (c is Pet pet && this.originalPetSpeed != -1)
             {
+                ModEntry.Instance.LogDebug($"Pet '{pet.displayName}' reached whistle target. Resetting speed from {pet.speed} to {this.originalPetSpeed}.");
                 pet.speed = this.originalPetSpeed;
                 this.originalPetSpeed = -1;
             }
@@ -286,6 +303,7 @@ namespace MovementOverhaul
         {
             if (c is FarmAnimal animal)
             {
+                ModEntry.Instance.LogDebug($"Animal '{animal.displayName}' the '{animal.type}' reached whistle target.");
                 animal.Halt();
             }
         }
@@ -323,15 +341,13 @@ namespace MovementOverhaul
     [HarmonyPatch(typeof(NPC), nameof(NPC.update), new Type[] { typeof(GameTime), typeof(GameLocation) })]
     public class NPC_Update_Patch
     {
-        /// <summary>
-        /// This Postfix patch runs AFTER the NPC's normal AI update.
-        /// It checks if the NPC is "running late" and adjusts their speed accordingly.
-        /// </summary>
+        // This Postfix patch runs AFTER the NPC's normal AI update.
+        // It checks if the NPC is "running late" and adjusts their speed accordingly.
         public static void Postfix(NPC __instance, GameTime time, GameLocation location)
         {
             try
             {
-                if (!ModEntry.Config.EnableRunningLate || !__instance.IsVillager || __instance.controller == null)
+                if (!ModEntry.Instance.Config.EnableRunningLate || !__instance.IsVillager || __instance.controller == null)
                     return;
 
                 // Check if the NPC is following a schedule path
@@ -341,12 +357,14 @@ namespace MovementOverhaul
                     float distance = Vector2.Distance(__instance.Tile, new Vector2(finalDestination.X, finalDestination.Y));
 
                     // If they are far away (more than specified tiles), make them move faster.
-                    if (distance > ModEntry.Config.DistanceConsideredFar)
+                    if (distance > ModEntry.Instance.Config.DistanceConsideredFar)
                     {
+                        //ModEntry.Instance.LogDebug($"[Harmony] NPC '{__instance.Name}' is running late (distance: {distance:F2}). Setting speed to 4.");
                         __instance.speed = 4; // Faster than normal walking speed (2)
                     }
                     else
                     {
+                        //ModEntry.Instance.LogDebug($"[Harmony] NPC '{__instance.Name}' is no longer running late. Resetting speed to 2.");
                         __instance.speed = 2; // Reset to normal speed
                     }
                 }

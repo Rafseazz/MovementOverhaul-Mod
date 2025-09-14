@@ -65,7 +65,7 @@ namespace MovementOverhaul
 
         public bool OnButtonPressed_Instant(ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return false;
 
             Vector2 landingTile = this.CalculateBestLandingTile();
@@ -75,18 +75,20 @@ namespace MovementOverhaul
 
         public void OnButtonPressed_Charge(object? sender, ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Config.EnableJump || e.Button != ModEntry.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return;
 
+            ModEntry.Instance.LogDebug("Jump key pressed. Starting charge.");
             this.IsChargingJump = true;
             this.jumpChargeTimer = 0f;
         }
 
         public void OnButtonReleased_Jump(object? sender, ButtonReleasedEventArgs e)
         {
-            if (!this.IsChargingJump || e.Button != ModEntry.Config.JumpKey)
+            if (!this.IsChargingJump || e.Button != ModEntry.Instance.Config.JumpKey)
                 return;
 
+            ModEntry.Instance.LogDebug($"Jump key released. Charge time: {this.jumpChargeTimer:F2}s. Calculating and starting jump.");
             this.IsChargingJump = false;
             Vector2 landingTile = this.CalculateBestLandingTile();
             this.StartJump(Game1.player, landingTile);
@@ -105,18 +107,21 @@ namespace MovementOverhaul
             {
                 float baseSpeed = 5f;
                 float extraSpeed = player.getMovementSpeed() - baseSpeed;
-                float bonusDistance = (extraSpeed > 0) ? extraSpeed * ModEntry.Config.JumpDistanceScaleFactor : 0;
-                maxJumpDistance = (int)Math.Round(ModEntry.Config.NormalJumpDistance + bonusDistance);
+                float bonusDistance = (extraSpeed > 0) ? extraSpeed * ModEntry.Instance.Config.JumpDistanceScaleFactor : 0;
+                maxJumpDistance = (int)Math.Round(ModEntry.Instance.Config.NormalJumpDistance + bonusDistance);
             }
+            ModEntry.Instance.LogDebug($"Calculating jump distance. Charge Timer: {this.jumpChargeTimer:F2}s.");
 
-            if (!ModEntry.Config.InstantJump && ModEntry.Config.ChargeAffectsDistance)
+            if (!ModEntry.Instance.Config.InstantJump && ModEntry.Instance.Config.ChargeAffectsDistance)
             {
                 float chargePercent = Math.Min(1f, this.jumpChargeTimer / MAX_JUMP_CHARGE_SECONDS);
                 jumpDistance = (int)Math.Ceiling(1 + (maxJumpDistance - 1) * chargePercent * 1.5f);
+                ModEntry.Instance.LogDebug($"-> Charge jump calculated. Charge %: {chargePercent:P0}, Max Dist: {maxJumpDistance}, Final Dist: {jumpDistance}");
             }
             else
             {
                 jumpDistance = maxJumpDistance;
+                ModEntry.Instance.LogDebug($"-> Instant jump calculated. Max Dist: {maxJumpDistance}, Final Dist: {jumpDistance}");
             }
 
             // Enforce a minimum distance for all horse jumps (can't do 2.5 huhu)
@@ -127,20 +132,34 @@ namespace MovementOverhaul
 
             Vector2 moveDirection = this.SafeGetDirectionVector(jumper);
 
-            if (ModEntry.Config.HopOverAnything)
+            if (ModEntry.Instance.Config.HopOverAnything)
             {
                 return jumper.Tile + moveDirection * jumpDistance;
             }
 
             Vector2 bestLandingTile = jumper.Tile;
+            ModEntry.Instance.LogDebug($"-> Searching for best landing tile up to {jumpDistance} tiles away...");
             for (int i = 1; i <= jumpDistance; i++)
             {
                 Vector2 currentTile = jumper.Tile + moveDirection * i;
-                if (this.IsSolidWall(currentTile)) break;
-                if (this.IsJumpableObjectOnTile(currentTile)) continue;
+                if (this.IsSolidWall(currentTile))
+                {
+                    ModEntry.Instance.LogDebug($"--> Tile {currentTile} is a solid wall. Stopping search.");
+                    break;
+                }
+                if (this.IsJumpableObjectOnTile(currentTile))
+                {
+                    ModEntry.Instance.LogDebug($"--> Tile {currentTile} has a jumpable object. Skipping.");
+                    continue;
+                }
                 if (this.IsTileUnobstructedForLanding(currentTile)) bestLandingTile = currentTile;
-                else break;
+                else
+                {
+                    ModEntry.Instance.LogDebug($"--> Tile {currentTile} is obstructed. Stopping search.");
+                    break;
+                }
             }
+            ModEntry.Instance.LogDebug($"==> Best landing tile found: {bestLandingTile}");
             return bestLandingTile;
         }
 
@@ -154,7 +173,7 @@ namespace MovementOverhaul
             if (this.IsChargingJump)
             {
                 this.jumpChargeTimer += (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
-                if (!this.Helper.Input.IsDown(ModEntry.Config.JumpKey))
+                if (!this.Helper.Input.IsDown(ModEntry.Instance.Config.JumpKey))
                     this.IsChargingJump = false;
             }
         }
@@ -165,13 +184,17 @@ namespace MovementOverhaul
 
             bool isHorseJump = player.isRidingHorse() && player.mount != null;
 
-            if (ModEntry.Config.JumpStaminaCost > 0)
+            if (ModEntry.Instance.Config.JumpStaminaCost > 0)
             {
-                bool freeJump = isHorseJump && ModEntry.Config.NoStaminaDrainOnHorse;
+                bool freeJump = isHorseJump && ModEntry.Instance.Config.NoStaminaDrainOnHorse;
                 if (!freeJump)
                 {
-                    if (player.stamina < ModEntry.Config.JumpStaminaCost) return;
-                    player.stamina -= ModEntry.Config.JumpStaminaCost;
+                    if (player.stamina < ModEntry.Instance.Config.JumpStaminaCost)
+                    {
+                        ModEntry.Instance.LogDebug($"Jump aborted: Not enough stamina. Have {player.stamina}, need {ModEntry.Instance.Config.JumpStaminaCost}.");
+                        return;
+                    }
+                    player.stamina -= ModEntry.Instance.Config.JumpStaminaCost;
                 }
             }
 
@@ -179,6 +202,8 @@ namespace MovementOverhaul
             {
                 ModEntry.IsHorseJumping = true;
             }
+            ModEntry.Instance.LogDebug($"{player.Name} IS GONNA JUMP YAHOO!");
+            ModEntry.Instance.LogDebug($"-> From tile {player.Tile} to {landingTile}. Horse jump: {isHorseJump}.");
 
             Character jumper = isHorseJump ? player.mount! : player;
             Vector2 startPosition = jumper.Position;
@@ -186,12 +211,12 @@ namespace MovementOverhaul
                 ? jumper.Position
                 : new Vector2(landingTile.X * 64 + 32, landingTile.Y * 64 + 32) - new Vector2(jumper.GetBoundingBox().Width / 2f, jumper.GetBoundingBox().Height / 2f);
 
-            float baseHeight = ModEntry.Config.JumpHeight;
+            float baseHeight = ModEntry.Instance.Config.JumpHeight;
             if (isHorseJump) baseHeight *= 1.7f;
             float speedHeightBonus = player.movementDirections.Any() ? 1.25f : 1.0f;
             float jumpHeight;
 
-            if (ModEntry.Config.InstantJump)
+            if (ModEntry.Instance.Config.InstantJump)
             {
                 jumpHeight = baseHeight * speedHeightBonus;
             }
@@ -201,28 +226,32 @@ namespace MovementOverhaul
                 jumpHeight = baseHeight * (0.5f + (1.2f * chargePercent)) * speedHeightBonus;
             }
 
-            if (!string.IsNullOrEmpty(ModEntry.Config.JumpSound))
+            if (!string.IsNullOrEmpty(ModEntry.Instance.Config.JumpSound))
             {
-                Game1.playSound(ModEntry.Config.JumpSound);
-                if (ModEntry.Config.AmplifyJumpSound)
+                Game1.playSound(ModEntry.Instance.Config.JumpSound);
+                if (ModEntry.Instance.Config.AmplifyJumpSound)
                 {
-                    Game1.playSound(ModEntry.Config.JumpSound);
-                    Game1.playSound(ModEntry.Config.JumpSound);
+                    Game1.playSound(ModEntry.Instance.Config.JumpSound);
+                    Game1.playSound(ModEntry.Instance.Config.JumpSound);
                 }
             }
+            ModEntry.Instance.LogDebug($"-> Jump height calculated: {jumpHeight:F2}. Duration: {ModEntry.Instance.Config.JumpDuration} ticks.");
 
-            var jumpState = new JumpArcState(ModEntry.Config.JumpDuration, jumpHeight, startPosition, targetPosition, isHorseJump, jumper.Sprite.currentFrame);
+            var jumpState = new JumpArcState(ModEntry.Instance.Config.JumpDuration, jumpHeight, startPosition, targetPosition, isHorseJump, jumper.Sprite.currentFrame);
             this._activeJumps[player.UniqueMultiplayerID] = jumpState;
 
             player.canMove = false;
 
-            var message = new FullJumpSyncMessage(player.UniqueMultiplayerID, startPosition, targetPosition, ModEntry.Config.JumpDuration, jumpHeight, isHorseJump);
+            ModEntry.Instance.LogDebug("-> Sending jump sync message to other players.");
+            var message = new FullJumpSyncMessage(player.UniqueMultiplayerID, startPosition, targetPosition, ModEntry.Instance.Config.JumpDuration, jumpHeight, isHorseJump);
             this.Multiplayer.SendMessage(message, "FullJumpSync", modIDs: new[] { this.ModManifest.UniqueID });
         }
         public void StartRemoteJump(FullJumpSyncMessage msg)
         {
             Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
             if (farmer is null) return;
+
+            ModEntry.Instance.LogDebug($"Received remote jump sync for '{farmer.Name}'. Starting their jump arc locally.");
 
             Character jumper = msg.IsHorseJump && farmer.mount != null ? farmer.mount : farmer;
 
@@ -264,7 +293,7 @@ namespace MovementOverhaul
 
                     if (jump.IsHorseJump)
                     {
-                        ModEntry.CurrentBounceFactor = ModEntry.Config.HorseJumpPlayerBounce;
+                        ModEntry.CurrentBounceFactor = ModEntry.Instance.Config.HorseJumpPlayerBounce;
                         ModEntry.CurrentHorseJumpPosition = newPosition;
                         ModEntry.CurrentHorseJumpYOffset = currentArcOffset;
                     }
@@ -282,7 +311,7 @@ namespace MovementOverhaul
 
                     if (jump.IsHorseJump)
                     {
-                        farmer.yJumpOffset = (int)(currentArcOffset * ModEntry.Config.HorseJumpPlayerBounce);
+                        farmer.yJumpOffset = (int)(currentArcOffset * ModEntry.Instance.Config.HorseJumpPlayerBounce);
                     }
                 }
 
@@ -300,7 +329,8 @@ namespace MovementOverhaul
         }
 
         private void EndJump(Farmer farmer, JumpArcState jump)
-        {   
+        {
+            ModEntry.Instance.LogDebug($"{farmer.Name} finished jumping. Yiy.");
             // Fail safe if ever player gets stuck while jumping on horse
             if (farmer.IsLocalPlayer && jump.IsHorseJump)
             {
@@ -347,7 +377,7 @@ namespace MovementOverhaul
         private bool IsJumpableObjectOnTile(Vector2 tile)
         {
             GameLocation location = Game1.currentLocation;
-            if (ModEntry.Config.JumpOverTrashCans)
+            if (ModEntry.Instance.Config.JumpOverTrashCans)
             {
                 string? tileAction = location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Action", "Buildings")
                                      ?? location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Action", "Back");
@@ -358,7 +388,7 @@ namespace MovementOverhaul
                 }
             }
             if (!location.isTilePassable(new Location((int)tile.X, (int)tile.Y), Game1.viewport)) return false;
-            if (this.GetCharacterAtTile(location, tile) is NPC && !ModEntry.Config.JumpThroughNPCs)
+            if (this.GetCharacterAtTile(location, tile) is NPC && !ModEntry.Instance.Config.JumpThroughNPCs)
                 return true;
             if (location.objects.TryGetValue(tile, out StardewValley.Object obj))
             {
@@ -377,9 +407,9 @@ namespace MovementOverhaul
             {
                 if (rc.getBoundingBox().Contains(tile.X * 64 + 32, tile.Y * 64 + 32))
                 {
-                    if (ModEntry.Config.JumpOverBoulders && (rc.parentSheetIndex.Value == 672)) return true;
-                    if (ModEntry.Config.JumpOverLargeStumps && (rc.parentSheetIndex.Value == 600)) return true;
-                    if (ModEntry.Config.JumpOverLargeLogs && (rc.parentSheetIndex.Value == 602)) return true;
+                    if (ModEntry.Instance.Config.JumpOverBoulders && (rc.parentSheetIndex.Value == 672)) return true;
+                    if (ModEntry.Instance.Config.JumpOverLargeStumps && (rc.parentSheetIndex.Value == 600)) return true;
+                    if (ModEntry.Instance.Config.JumpOverLargeLogs && (rc.parentSheetIndex.Value == 602)) return true;
                 }
             }
             return false;
@@ -430,12 +460,12 @@ namespace MovementOverhaul
             if (c != null)
             {
                 // If it's an NPC and we can jump through them, the tile is NOT obstructed.
-                if (c is NPC && ModEntry.Config.JumpThroughNPCs)
+                if (c is NPC && ModEntry.Instance.Config.JumpThroughNPCs)
                 {
                     // Allow landing.
                 }
                 // If it's another Farmer and we can jump through them, the tile is NOT obstructed.
-                else if (c is Farmer && ModEntry.Config.JumpThroughPlayers)
+                else if (c is Farmer && ModEntry.Instance.Config.JumpThroughPlayers)
                 {
                     // Allow landing.
                 }
@@ -478,10 +508,8 @@ namespace MovementOverhaul
     [HarmonyPatch(typeof(StardewValley.Object), nameof(StardewValley.Object.drawWhenHeld))]
     public class Object_DrawWhenHeld_Patch
     {
-        /// <summary>
-        /// This Prefix patch runs BEFORE the game draws an item being held.
-        /// It modifies the 'objectPosition' parameter by reference if the holding farmer is jumping.
-        /// </summary>
+        // This Prefix patch runs BEFORE the game draws an item being held.
+        // It modifies the 'objectPosition' parameter by reference if the holding farmer is jumping.
         public static void Prefix(StardewValley.Object __instance, Farmer f, ref Vector2 objectPosition)
         {
             try

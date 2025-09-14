@@ -27,6 +27,7 @@ namespace MovementOverhaul
             if (this.defaultAnimationInterval == 0f && Context.IsWorldReady)
             {
                 this.defaultAnimationInterval = Game1.player.FarmerSprite.interval;
+                ModEntry.Instance.LogDebug($"Initialized default animation interval: {this.defaultAnimationInterval}.");
             }
 
             if (!Context.IsWorldReady || !Game1.player.CanMove)
@@ -34,16 +35,22 @@ namespace MovementOverhaul
 
             // Smoother turning is a client-side-only cosmetic effect for the local player.
             this.HandleSmootherTurning(Game1.player);
-
-            // Adaptive speed is synced by having all clients run the logic for all farmers.
-            this.HandleAdaptiveAnimationSpeed();
-
             this.lastFacingDirection = Game1.player.FacingDirection;
+
+            if (!ModEntry.Instance.Config.AdaptiveAnimationSpeed)
+            {
+                return;
+            }
+            else
+            {
+                // Adaptive speed is synced by having all clients run the logic for all farmers.
+                this.HandleAdaptiveAnimationSpeed();
+            }
         }
 
         private void HandleSmootherTurning(Farmer who)
         {
-            if (!ModEntry.Config.SmootherTurningAnimation || !who.IsLocalPlayer)
+            if (!ModEntry.Instance.Config.SmootherTurningAnimation || !who.IsLocalPlayer)
             {
                 // Ensure timer is off if feature is disabled.
                 if (this.turnAnimationTimer > 0) this.turnAnimationTimer = 0;
@@ -56,6 +63,7 @@ namespace MovementOverhaul
             // Start the timer only if a turn is detected and we're not already in the animation.
             if (this.turnAnimationTimer == 0 && who.isMoving() && isSharpTurn)
             {
+                ModEntry.Instance.LogDebug("Sharp turn detected. Starting smoother turning animation.");
                 this.turnAnimationTimer = 3; // A 3-frame transition
             }
 
@@ -95,7 +103,7 @@ namespace MovementOverhaul
             // Don't run this logic until the default interval has been safely stored.
             if (this.defaultAnimationInterval == 0f) return;
 
-            if (!ModEntry.Config.AdaptiveAnimationSpeed)
+            if (!ModEntry.Instance.Config.AdaptiveAnimationSpeed)
             {
                 // If disabled, ensure all farmers in the location are reset to the default speed.
                 foreach (var farmer in Game1.currentLocation.farmers)
@@ -110,13 +118,13 @@ namespace MovementOverhaul
             {
                 if (farmer.isMoving())
                 {
-                    float currentSpeed = farmer.getMovementSpeed();
+                    float currentSpeed = farmer.getMovementSpeed() * 0.8f; // Multiplied by 0.8 for fine-tuning to closely match vanilla interval
                     const float baseSpeed = 5f; // Farmer's default running speed.
 
                     if (currentSpeed > 0)
                     {
                         float speedRatio = baseSpeed / currentSpeed;
-                        farmer.FarmerSprite.interval = this.defaultAnimationInterval * speedRatio;
+                        farmer.FarmerSprite.interval = this.defaultAnimationInterval * (speedRatio/ModEntry.Instance.Config.AnimationExaggerationFactor);
                     }
                 }
                 else

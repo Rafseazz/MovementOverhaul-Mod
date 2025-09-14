@@ -1,5 +1,9 @@
 ﻿{
   // == Config Menu ==
+  "config.debug.title": "Debug Mode",
+  "config.enable-debug.name": "Enable debug mode",
+  "config.enable-debug.tooltip": "Check to enable debug mode (duh)",
+
   // Jump Settings
   "config.jump.title": "Jump Settings",
   "config.instant-jump.name": "Instant Jump on Press",
@@ -130,6 +134,8 @@
   "config.enable-turning.tooltip": "If enabled, adds a transitional frame when turning left-to-right to look less jarring. (Might have potential conflicts with other mods)",
   "config.enable-animspeed.name": "Adaptive Animation Speed",
   "config.enable-animspeed.tooltip": "If enabled, the speed of your character's run animation will match your movement speed to prevent 'ice skating'.",
+  "config.animation-exag-factor.name": "Animation Exaggeration Factor",
+  "config.animation-exag-factor.tooltip": "Controls how much the walking/running animation speed changes based on movement speed. Lower than 1 means slowing animation down.",
 
   // Combat
   "config.combat-section.title": "Combat Settings",

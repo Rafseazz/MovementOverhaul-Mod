@@ -47,16 +47,20 @@ namespace MovementOverhaul
             if (Game1.player.isRidingHorse())
                 return;
 
+            //ModEntry.Instance.LogDebug($"Button pressed: {e.Button}. Is sitting on ground: {this.isSittingOnGround}.");
+
             if (this.isSittingOnGround && e.Button.IsActionButton())
             {
+                ModEntry.Instance.LogDebug("Action button pressed while sitting. Standing up.");
                 this.StopSittingOnGround();
             }
 
-            if (!ModEntry.Config.EnableSit || !Context.CanPlayerMove || ModEntry.JumpLogic.IsChargingJump)
+            if (!ModEntry.Instance.Config.EnableSit || !Context.CanPlayerMove || ModEntry.JumpLogic.IsChargingJump)
                 return;
 
-            if (e.Button == ModEntry.Config.SitKey)
+            if (e.Button == ModEntry.Instance.Config.SitKey)
             {
+                ModEntry.Instance.LogDebug("Sit key pressed.");
                 if (this.isSittingOnGround)
                     this.StopSittingOnGround();
                 else if (Context.CanPlayerMove)
@@ -66,7 +70,7 @@ namespace MovementOverhaul
 
         public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
-            if (!ModEntry.Config.EnableSit)
+            if (!ModEntry.Instance.Config.EnableSit)
             {
                 if (this.isSittingOnGround) this.StopSittingOnGround();
                 return;
@@ -80,7 +84,8 @@ namespace MovementOverhaul
                 float elapsedSeconds = (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
                 if (!this.wasSittingInChairLastTick)
                 {
-                    this.sitRegenDelayTimer = ModEntry.Config.SitRegenDelaySeconds;
+                    ModEntry.Instance.LogDebug("Player just sat in a chair. Starting regen delay timer.");
+                    this.sitRegenDelayTimer = ModEntry.Instance.Config.SitRegenDelaySeconds;
                 }
 
                 if (this.sitRegenDelayTimer > 0)
@@ -93,7 +98,8 @@ namespace MovementOverhaul
                     if (this.regenTickTimer <= 0)
                     {
                         this.regenTickTimer = 1f;
-                        float regenAmount = ModEntry.Config.SitChairRegenPerSecond;
+                        float regenAmount = ModEntry.Instance.Config.SitChairRegenPerSecond;
+                        ModEntry.Instance.LogDebug($"Regenerating {regenAmount} stamina from sitting in chair. Current: {Game1.player.stamina}");
                         Game1.player.stamina = Math.Min(Game1.player.MaxStamina, Game1.player.stamina + regenAmount);
                     }
                 }
@@ -105,6 +111,7 @@ namespace MovementOverhaul
             {
                 if (Game1.player.movementDirections.Any())
                 {
+                    ModEntry.Instance.LogDebug("Player moved while sitting. Standing up.");
                     this.StopSittingOnGround();
                     return;
                 }
@@ -124,7 +131,8 @@ namespace MovementOverhaul
                     if (this.regenTickTimer <= 0)
                     {
                         this.regenTickTimer = 1f;
-                        float regenAmount = ModEntry.Config.SitGroundRegenPerSecond;
+                        float regenAmount = ModEntry.Instance.Config.SitGroundRegenPerSecond;
+                        ModEntry.Instance.LogDebug($"Regenerating {regenAmount} stamina from sitting on ground. Current: {Game1.player.stamina}");
                         Game1.player.stamina = Math.Min(Game1.player.MaxStamina, Game1.player.stamina + regenAmount);
                     }
                 }
@@ -140,6 +148,9 @@ namespace MovementOverhaul
 
         private void StartSittingOnGround()
         {
+            if (this.IsSittingOnGround) return;
+            ModEntry.Instance.LogDebug("NOW GROUND SITTING! YEAH DIRTY PANTS!");
+
             this.isSittingOnGround = true;
             Game1.player.canMove = false;
             Game1.player.completelyStopAnimatingOrDoingAction();
@@ -164,12 +175,13 @@ namespace MovementOverhaul
                     this.sittingIsFlipped = false;
                     break;
             }
+            ModEntry.Instance.LogDebug($"Sit frame set to {this.sittingFrame} based on direction {Game1.player.FacingDirection}.");
 
-            Game1.playSound("dwoop");
+            Game1.playSound("pickUpItem");
 
             this.SyncSitState();
 
-            this.sitRegenDelayTimer = ModEntry.Config.SitRegenDelaySeconds;
+            this.sitRegenDelayTimer = ModEntry.Instance.Config.SitRegenDelaySeconds;
             this.regenTickTimer = 1f;
             this.socialTimer = 15f;
             this.fireCheckTimer = 5f;
@@ -179,6 +191,9 @@ namespace MovementOverhaul
 
         private void StopSittingOnGround()
         {
+            if (!this.isSittingOnGround) return;
+            ModEntry.Instance.LogDebug("STOOD UP FROM SITTING ON THE GROUND NAUR");
+
             this.isSittingOnGround = false;
             this.sittingFrame = -1;
             this.sittingIsFlipped = false;
@@ -213,6 +228,7 @@ namespace MovementOverhaul
         private void SyncSitState(bool isStandingUp = false)
         {
             if (!Context.IsMultiplayer) return;
+            ModEntry.Instance.LogDebug($"Sending multiplayer sit state sync message. Standing up: {isStandingUp}.");
 
             SitStateMessage message;
             if (isStandingUp)
@@ -236,17 +252,19 @@ namespace MovementOverhaul
 
         private void HandleSocialSitting(float elapsedSeconds)
         {
-            if (!ModEntry.Config.SocialSittingFriendship) return;
+            if (!ModEntry.Instance.Config.SocialSittingFriendship) return;
 
             this.socialTimer -= elapsedSeconds;
             if (this.socialTimer <= 0)
             {
                 this.socialTimer = 15f;
+                ModEntry.Instance.LogDebug("Social timer expired. Checking for nearby NPCs and pets.");
 
                 foreach (var character in Game1.currentLocation.characters)
                 {
                     if (Vector2.Distance(Game1.player.Tile, character.Tile) <= 2 && character is NPC npc && !npc.IsMonster && Game1.player.friendshipData.ContainsKey(npc.Name))
                     {
+                        ModEntry.Instance.LogDebug($"-> Found nearby NPC: {npc.Name}. Granting 5 friendship points.");
                         Game1.player.changeFriendship(5, npc);
                         npc.doEmote(32);
                         Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.social-sitting.npc", new { npcName = npc.displayName }), 4));
@@ -256,6 +274,7 @@ namespace MovementOverhaul
                 Pet? pet = Game1.player.getPet();
                 if (pet != null && pet.currentLocation == Game1.currentLocation && Vector2.Distance(Game1.player.Tile, pet.Tile) <= 2)
                 {
+                    ModEntry.Instance.LogDebug($"-> Found nearby pet: {pet.displayName}. Granting 6 friendship points.");
                     pet.friendshipTowardFarmer.Value = Math.Min(1000, pet.friendshipTowardFarmer.Value + 6);
                     pet.doEmote(20);
                     Game1.addHUDMessage(new HUDMessage(this.Helper.Translation.Get("hud.social-sitting.pet", new { petName = pet.displayName }), 4));
@@ -265,13 +284,14 @@ namespace MovementOverhaul
 
         private void HandleFireBuff(float elapsedSeconds)
         {
-            if (!ModEntry.Config.FireSittingBuff) return;
+            if (!ModEntry.Instance.Config.FireSittingBuff) return;
             string buffId = $"{this.ModManifest.UniqueID}.WarmedBuff";
 
             this.fireCheckTimer -= elapsedSeconds;
             if (this.fireCheckTimer <= 0)
             {
                 this.fireCheckTimer = 5f;
+                ModEntry.Instance.LogDebug("Checking for nearby fire sources for 'Warmed' buff.");
 
                 bool nearFire = false;
                 foreach (var furniture in Game1.currentLocation.furniture)
@@ -289,6 +309,7 @@ namespace MovementOverhaul
 
                 if (nearFire && !Game1.player.hasBuff(buffId))
                 {
+                    ModEntry.Instance.LogDebug("Near a fire source and doesn't have buff. Applying 'Warmed' buff.");
                     Buff warmedBuff = new Buff(
                         id: buffId,
                         displayName: this.Helper.Translation.Get("buff.warmed.name"),
@@ -308,7 +329,7 @@ namespace MovementOverhaul
 
         private void HandleMeditateBuff(float elapsedSeconds)
         {
-            if (!ModEntry.Config.MeditateForBuff) return;
+            if (!ModEntry.Instance.Config.MeditateForBuff) return;
             string buffId = $"{this.ModManifest.UniqueID}.FocusedBuff";
 
             this.meditateTimer -= elapsedSeconds;
@@ -317,6 +338,7 @@ namespace MovementOverhaul
                 this.meditateTimer = 9999;
                 if (!Game1.player.hasBuff(buffId))
                 {
+                    ModEntry.Instance.LogDebug("Meditation timer complete. Applying 'Focused' buff.");
                     Buff focusedBuff = new Buff(
                         id: buffId,
                         displayName: this.Helper.Translation.Get("buff.focused.name"),
@@ -332,12 +354,14 @@ namespace MovementOverhaul
 
         private void HandleIdleEffects(float elapsedSeconds)
         {
-            if (!ModEntry.Config.IdleSitEffects) return;
+            if (!ModEntry.Instance.Config.IdleSitEffects) return;
 
             this.particleIdleTimer -= elapsedSeconds;
             if (this.particleIdleTimer <= 0)
             {
                 this.particleIdleTimer = Game1.random.Next(5, 10);
+                ModEntry.Instance.LogDebug($"Idle effects timer expired. Resetting for {this.particleIdleTimer}s.");
+
 
                 int emote = Game1.random.Next(3) switch
                 {
@@ -345,8 +369,8 @@ namespace MovementOverhaul
                     1 => 32,
                     _ => 56, 
                 };
+                ModEntry.Instance.LogDebug($"-> Triggering random emote: {emote}.");
                 Game1.player.doEmote(emote);
-
             }
         }
     }
