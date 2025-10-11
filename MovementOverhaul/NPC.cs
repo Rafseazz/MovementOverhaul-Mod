@@ -56,6 +56,15 @@ namespace MovementOverhaul
             if (!ModEntry.Instance.Config.EnableWhistle || !Context.IsWorldReady || !Context.CanPlayerMove || e.Button != ModEntry.Instance.Config.WhistleKey)
                 return;
 
+            if (Context.IsMultiplayer)
+            {
+                this.Multiplayer.SendMessage(
+                    new WhistleAnimationMessage(Game1.player.UniqueMultiplayerID),
+                    "PlayWhistleAnimation",
+                    modIDs: new[] { this.ModManifest.UniqueID }
+                );
+            }
+
             ModEntry.Instance.LogDebug("Whistle key pressed by local player. Starting animation weeee");
             this.StartWhistleAnimation(Game1.player);
         }
@@ -100,7 +109,7 @@ namespace MovementOverhaul
             if (whistler != null)
             {
                 ModEntry.Instance.LogDebug($"Remote whistler is '{whistler.Name}' DUN DUN DUUUN");
-                if (ModEntry.Instance.Config.HearRemoteWhistles)
+                if (ModEntry.Instance.Config.HearRemoteWhistles && whistler.currentLocation == Game1.currentLocation)
                 {
                     Game1.playSound("whistle");
                 }
@@ -119,6 +128,14 @@ namespace MovementOverhaul
             if (pet != null && pet.currentLocation == whistler.currentLocation)
             {
                 ModEntry.Instance.LogDebug($"-> Found pet '{pet.displayName}'. Attempting to call forth");
+
+                // Animation reset
+                pet.Halt();
+                pet.isSleeping.Value = false;
+                pet.Sprite.StopAnimation();
+                //pet.Sprite.ClearAnimation();
+                pet.Sprite.CurrentFrame = 28;
+
                 Point targetTile = this.GetRandomAdjacentOpenTile(whistler.TilePoint, whistler.currentLocation) ?? whistler.TilePoint;
                 pet.doEmote(16);
 
@@ -242,7 +259,12 @@ namespace MovementOverhaul
             who.faceDirection(2);
             who.canMove = false;
             who.synchronizedJump(3);
-            Game1.soundBank.PlayCue("whistle");
+
+            if (who.IsLocalPlayer)
+            {
+                Game1.soundBank.PlayCue("whistle");
+            }
+
             FarmerSprite.AnimationFrame[] frames = new FarmerSprite.AnimationFrame[]
             {
                 new FarmerSprite.AnimationFrame(67, 100),

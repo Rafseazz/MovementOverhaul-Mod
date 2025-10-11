@@ -21,11 +21,16 @@ namespace MovementOverhaul
         private class DashState
         {
             public int Timer;
-            public readonly Vector2 Direction;
-            public DashState(int timer, Vector2 direction)
+            public readonly int Duration;
+            public readonly Vector2 StartPosition;
+            public readonly Vector2 TargetPosition;
+            public DashState(int duration, Vector2 direction, Vector2 startPosition)
             {
-                this.Timer = timer;
-                this.Direction = direction;
+                this.Timer = duration;
+                this.Duration = duration;
+                this.StartPosition = startPosition;
+                // Pre-calculate the final destination of the dash
+                this.TargetPosition = startPosition + direction * 18f * duration;
             }
         }
 
@@ -70,103 +75,89 @@ namespace MovementOverhaul
         {
             if (!Context.IsWorldReady) return;
 
+            // Cooldown timer for the local player
             if (this.dashCooldownTimer > 0f)
             {
                 this.dashCooldownTimer -= (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
             }
 
+            // LOGIC FOR THE LOCAL PLAYER'S DASH
             if (this.isDashing)
             {
-                // Stop the dash if the player is no longer swinging
-                if (!Game1.player.UsingTool)
+                if (!Game1.player.UsingTool || this.dashTimer <= 0)
                 {
-                    ModEntry.Instance.LogDebug("Player stopped using tool. Ending dash.");
                     this.isDashing = false;
-                }
-
-                this.dashTimer--;
-
-                Vector2 nextPosition = Game1.player.Position + this.dashDirection * 18f;
-                Rectangle nextBoundingBox = Game1.player.GetBoundingBox();
-                nextBoundingBox.X = (int)nextPosition.X;
-                nextBoundingBox.Y = (int)nextPosition.Y;
-
-                if (!Game1.currentLocation.isCollidingPosition(nextBoundingBox, Game1.viewport, true, 0, false, Game1.player))
-                    Game1.player.Position = nextPosition;
-                else
-                    this.isDashing = false;
-
-                if (this.dashTimer <= 0)
-                {
-                    ModEntry.Instance.LogDebug("Dash timer expired. Ending dash.");
-                    this.isDashing = false;
-                }
-
-                // If the local dash just ended, send a stop message.
-                if (!this.isDashing)
-                {
-                    ModEntry.Instance.LogDebug("-> Local dash ended. Syncing state with other players.");
                     this.SyncDashState(false, Vector2.Zero);
                 }
-
-                // Remote player dash logic
-                if (this._activeRemoteDashes.Any())
+                else
                 {
-                    var finishedDashes = new List<long>();
-                    foreach (var dashPair in this._activeRemoteDashes)
-                    {
-                        long farmerId = dashPair.Key;
-                        DashState dash = dashPair.Value;
-
-                        Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == farmerId);
-                        if (farmer is null)
-                        {
-                            finishedDashes.Add(farmerId);
-                            continue;
-                        }
-
-                        dash.Timer--;
-
-                        Vector2 nextPositionRemote = farmer.Position + dash.Direction * 18f;
-                        farmer.Position = nextPositionRemote;
-
-                        if (dash.Timer <= 0 || !farmer.UsingTool)
-                        {
-                            finishedDashes.Add(farmerId);
-                        }
-                    }
-                    foreach (long id in finishedDashes)
-                    {
-                        this._activeRemoteDashes.Remove(id);
-                    }
+                    this.dashTimer--;
+                    Vector2 nextPosition = Game1.player.Position + this.dashDirection * 18f;
+                    Rectangle nextBoundingBox = Game1.player.GetBoundingBox();
+                    nextBoundingBox.X = (int)nextPosition.X;
+                    nextBoundingBox.Y = (int)nextPosition.Y;
+                    if (!Game1.currentLocation.isCollidingPosition(nextBoundingBox, Game1.viewport, true, 0, false, Game1.player))
+                        Game1.player.Position = nextPosition;
+                    else
+                        this.isDashing = false;
                 }
             }
 
-            // Area-of-effect damage logic.
+            // SMOOTHING LOGIC FOR REMOTE PLAYERS' DASHES
+            if (this._activeRemoteDashes.Any())
+            {
+                var finishedDashes = new List<long>();
+                foreach (var dashPair in this._activeRemoteDashes)
+                {
+                    long farmerId = dashPair.Key;
+                    DashState dash = dashPair.Value;
+                    Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == farmerId);
+
+                    if (farmer is null || dash.Timer <= 0 || !farmer.UsingTool)
+                    {
+                        finishedDashes.Add(farmerId);
+                        continue;
+                    }
+
+                    dash.Timer--;
+
+                    // Calculate how far along the dash arc the player should be (a value from 0.0 to 1.0)
+                    float progress = 1f - ((float)dash.Timer / dash.Duration);
+
+                    // Determine the ideal, exact position for this point in the animation
+                    Vector2 idealPosition = Vector2.Lerp(dash.StartPosition, dash.TargetPosition, progress);
+
+                    // Instead of teleporting, smoothly move the farmer's current position
+                    // towards the ideal position. This works with the game's netcode instead of fighting it.
+                    farmer.Position = Vector2.Lerp(farmer.Position, idealPosition, 0.4f);
+                }
+
+                foreach (long id in finishedDashes)
+                {
+                    this._activeRemoteDashes.Remove(id);
+                }
+            }
+
+            // DAMAGE LOGIC FOR THE LOCAL PLAYER'S DASH
             if (this.isDashing && Game1.player.CurrentTool is MeleeWeapon weapon)
             {
                 Rectangle damageArea = Game1.player.GetBoundingBox();
-
-                // Set the damage area based on the weapon type.
                 int inflationAmount = weapon.type.Value switch
                 {
-                    0 => 64, // 0 = Sword
-                    3 => 64, // 3 = Defensive Sword
-                    1 => 32, // 1 = Dagger (smaller)
-                    2 => 128, // 2 = Club/Hammer (larger)
-                    _ => 64 // Default fallback
+                    0 => 64,
+                    3 => 64,
+                    1 => 32,
+                    2 => 128,
+                    _ => 64
                 };
-
-                damageArea.Inflate(inflationAmount, inflationAmount); // A 3x3 tile area around the player.
+                damageArea.Inflate(inflationAmount, inflationAmount);
 
                 foreach (Monster monster in Game1.currentLocation.characters.OfType<Monster>().ToList())
                 {
-                    if (monster != null && monster.GetBoundingBox().Intersects(damageArea) && !this.monstersHitThisDash.Contains(monster))
+                    if (monster.GetBoundingBox().Intersects(damageArea) && !this.monstersHitThisDash.Contains(monster))
                     {
-                        ModEntry.Instance.LogDebug($"-> Dash attack hitting monster: {monster.Name}.");
                         int minDamage = weapon.minDamage.Value;
                         int maxDamage = weapon.maxDamage.Value;
-
                         Game1.currentLocation.damageMonster(monster.GetBoundingBox(), minDamage, maxDamage, false, Game1.player);
                         this.monstersHitThisDash.Add(monster);
                     }
@@ -228,11 +219,13 @@ namespace MovementOverhaul
         public void HandleRemoteDashState(DashAttackMessage msg)
         {
             Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == msg.PlayerID);
+            if (farmer is null) return;
             ModEntry.Instance.LogDebug($"Received remote dash state for '{farmer?.Name ?? "Unknown"}'. IsStarting: {msg.IsStarting}.");
 
-            if (msg.IsStarting)
+            if (msg.IsStarting && farmer is not null)
             {
-                this._activeRemoteDashes[msg.PlayerID] = new DashState(10, msg.Direction);
+                // Create the new DashState, capturing the remote player's current position as the start point.
+                this._activeRemoteDashes[msg.PlayerID] = new DashState(10, msg.Direction, farmer.Position);
             }
             else
             {

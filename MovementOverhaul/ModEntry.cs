@@ -393,7 +393,13 @@ namespace MovementOverhaul
                     farmer.completelyStopAnimatingOrDoingAction();
                     farmer.faceDirection(state.Direction);
                     farmer.showFrame(state.Frame, state.IsFlipped);
-                    farmer.yJumpOffset = state.YOffset;
+
+                    // If the jump logic is NOT handling this farmer's jump, then apply the y-offset from the sit state.
+                    // Otherwise, let JumpLogic control the y-offset to prevent conflict.
+                    if (!JumpLogic.IsPlayerJumping(farmer.UniqueMultiplayerID))
+                    {
+                        farmer.yJumpOffset = state.YOffset;
+                    }
                 }
             }
         }

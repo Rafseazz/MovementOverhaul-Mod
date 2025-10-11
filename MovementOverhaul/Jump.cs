@@ -65,7 +65,7 @@ namespace MovementOverhaul
 
         public bool OnButtonPressed_Instant(ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.player.IsSitting() || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return false;
 
             Vector2 landingTile = this.CalculateBestLandingTile();
@@ -75,7 +75,7 @@ namespace MovementOverhaul
 
         public void OnButtonPressed_Charge(object? sender, ButtonPressedEventArgs e)
         {
-            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
+            if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.player.IsSitting() || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return;
 
             ModEntry.Instance.LogDebug("Jump key pressed. Starting charge.");
@@ -299,7 +299,13 @@ namespace MovementOverhaul
                     }
                     else if (jumper is Farmer f)
                     {
-                        f.Sprite.currentFrame = (jump.Progress < jump.Duration / 2) ? 12 : 11;
+                        bool isSitJump = jump.OriginalFrame == 29 || jump.OriginalFrame == 58 || jump.OriginalFrame == 62;
+
+                        if (!isSitJump)
+                        {
+                            // Only apply the standard jump animation if it's NOT a sit-jump.
+                            f.Sprite.currentFrame = (jump.Progress < jump.Duration / 2) ? 12 : 11;
+                        }
                     }
                 }
                 else // For REMOTE players
@@ -377,6 +383,17 @@ namespace MovementOverhaul
         private bool IsJumpableObjectOnTile(Vector2 tile)
         {
             GameLocation location = Game1.currentLocation;
+
+            // Check for the custom "Jumpable" property on the map tile.
+            string? jumpableProp = location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Jumpable", "Back")
+                                   ?? location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Jumpable", "Buildings");
+
+            if (jumpableProp != null)
+            {
+                ModEntry.Instance.LogDebug($"--> Tile {tile} has 'Jumpable' property. It can be jumped over.");
+                return true;
+            }
+
             if (ModEntry.Instance.Config.JumpOverTrashCans)
             {
                 string? tileAction = location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Action", "Buildings")
