@@ -162,6 +162,8 @@ namespace MovementOverhaul
         public bool EnableJumpAttack { get; set; } = true;
         public float JumpAttackDamageMultiplier { get; set; } = 1.5f; // 50% damage bonus
         public float SprintAttackGracePeriod { get; set; } = 0.25f; // Default to 250ms
+        public string DashAttackParticleEffect { get; set; } = "Smoke";
+        public bool LaggingDashParticles { get; set; } = true;
         public bool EnableWhistle { get; set; } = true;
         public SButton WhistleKey { get; set; } = SButton.OemComma;
         public int WhistleAnimalMinHearts { get; set; } = 3;
@@ -366,6 +368,11 @@ namespace MovementOverhaul
                 var msg = e.ReadAs<DashAttackMessage>();
                 CombatLogic.HandleRemoteDashState(msg);
             }
+            else if (e.Type == "CreateDashParticleBurst")
+            {
+                var msg = e.ReadAs<SprintParticleMessage>();
+                CombatLogic.CreateRemoteDashParticleBurst(msg.PlayerID, msg.ParticleType);
+            }
             else if (e.Type == "WhistleCommand")
             {
                 var msg = e.ReadAs<WhistleMessage>();
@@ -518,6 +525,14 @@ namespace MovementOverhaul
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-stamina.name"), tooltip: () => this.Helper.Translation.Get("config.dash-stamina.tooltip"), min: 0f, max: 20f, interval: 1f, getValue: () => Config.DashAttackStaminaCost, setValue: value => Config.DashAttackStaminaCost = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-damage.name"), tooltip: () => this.Helper.Translation.Get("config.dash-damage.tooltip"), min: 1.0f, max: 3.0f, interval: 0.05f, getValue: () => Config.DashAttackDamageMultiplier, setValue: value => Config.DashAttackDamageMultiplier = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-grace-period.name"), tooltip: () => this.Helper.Translation.Get("config.dash-grace-period.tooltip"), min: 0.1f, max: 0.5f, interval: 0.05f, getValue: () => Config.SprintAttackGracePeriod, setValue: value => Config.SprintAttackGracePeriod = value);
+            configMenu.AddTextOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dash-particles.name"), tooltip: () => this.Helper.Translation.Get("config.dash-particles.tooltip"), getValue: () => Config.DashAttackParticleEffect, setValue: value => Config.DashAttackParticleEffect = value, allowedValues: new string[] { "Smoke", "GreenDust", "Circular", "Leaves", "Fire1", "Fire2", "BlueFire", "Stars", "Water Splash", "Poison", "None" }, formatAllowedValue: value => this.Helper.Translation.Get($"config.sprint-particles.value.{value}", new { defaultValue = value }));
+            configMenu.AddBoolOption(
+                mod: this.ModManifest,
+                name: () => this.Helper.Translation.Get("config.lagging-dash-particles.name"),
+                tooltip: () => this.Helper.Translation.Get("config.lagging-dash-particles.tooltip"),
+                getValue: () => Config.LaggingDashParticles,
+                setValue: value => Config.LaggingDashParticles = value
+            );
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.enable-dash-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.enable-dash-cooldown.tooltip"), getValue: () => Config.EnableDashAttackCooldown, setValue: value => Config.EnableDashAttackCooldown = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.sword-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.sword-cooldown.tooltip"), min: 0.5f, max: 10f, interval: 0.25f, getValue: () => Config.SwordDashCooldown, setValue: value => Config.SwordDashCooldown = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.dagger-cooldown.name"), tooltip: () => this.Helper.Translation.Get("config.dagger-cooldown.tooltip"), min: 0.25f, max: 10f, interval: 0.25f, getValue: () => Config.DaggerDashCooldown, setValue: value => Config.DaggerDashCooldown = value);

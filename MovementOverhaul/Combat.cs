@@ -18,19 +18,15 @@ namespace MovementOverhaul
         private Vector2 dashDirection;
         private float dashCooldownTimer = 0f;
         private readonly List<Monster> monstersHitThisDash = new();
+        private float dashParticleTimer = 0f;
         private class DashState
         {
             public int Timer;
-            public readonly int Duration;
-            public readonly Vector2 StartPosition;
-            public readonly Vector2 TargetPosition;
-            public DashState(int duration, Vector2 direction, Vector2 startPosition)
+            public readonly Vector2 Direction;
+            public DashState(int timer, Vector2 direction)
             {
-                this.Timer = duration;
-                this.Duration = duration;
-                this.StartPosition = startPosition;
-                // Pre-calculate the final destination of the dash
-                this.TargetPosition = startPosition + direction * 18f * duration;
+                this.Timer = timer;
+                this.Direction = direction;
             }
         }
 
@@ -92,7 +88,7 @@ namespace MovementOverhaul
                 else
                 {
                     this.dashTimer--;
-                    Vector2 nextPosition = Game1.player.Position + this.dashDirection * 18f;
+                    Vector2 nextPosition = Game1.player.Position + this.dashDirection * 14f;
                     Rectangle nextBoundingBox = Game1.player.GetBoundingBox();
                     nextBoundingBox.X = (int)nextPosition.X;
                     nextBoundingBox.Y = (int)nextPosition.Y;
@@ -101,9 +97,27 @@ namespace MovementOverhaul
                     else
                         this.isDashing = false;
                 }
+
+                this.dashParticleTimer -= (float)Game1.currentGameTime.ElapsedGameTime.TotalSeconds;
+                if (this.dashParticleTimer <= 0f)
+                {
+                    this.dashParticleTimer = 0.05f; // Spawn bursts more frequently than sprint particles
+                    string particleType = ModEntry.Instance.Config.DashAttackParticleEffect;
+                    if (particleType != "None")
+                    {
+                        // Tell other players to create a particle burst
+                        this.Multiplayer.SendMessage(new SprintParticleMessage(Game1.player.UniqueMultiplayerID, particleType), "CreateDashParticleBurst", modIDs: new[] { this.ModManifest.UniqueID });
+
+                        // Pass the local player's dash direction to the creation method
+                        for (int i = 0; i < 3; i++)
+                        {
+                            this.CreateDashParticle(Game1.player, particleType, this.dashDirection);
+                        }
+                    }
+                }
             }
 
-            // SMOOTHING LOGIC FOR REMOTE PLAYERS' DASHES
+            // LOGIC FOR REMOTE PLAYERS' DASHES
             if (this._activeRemoteDashes.Any())
             {
                 var finishedDashes = new List<long>();
@@ -111,30 +125,24 @@ namespace MovementOverhaul
                 {
                     long farmerId = dashPair.Key;
                     DashState dash = dashPair.Value;
-                    Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == farmerId);
-
-                    if (farmer is null || dash.Timer <= 0 || !farmer.UsingTool)
-                    {
-                        finishedDashes.Add(farmerId);
-                        continue;
-                    }
-
                     dash.Timer--;
 
-                    // Calculate how far along the dash arc the player should be (a value from 0.0 to 1.0)
-                    float progress = 1f - ((float)dash.Timer / dash.Duration);
-
-                    // Determine the ideal, exact position for this point in the animation
-                    Vector2 idealPosition = Vector2.Lerp(dash.StartPosition, dash.TargetPosition, progress);
-
-                    // Instead of teleporting, smoothly move the farmer's current position
-                    // towards the ideal position. This works with the game's netcode instead of fighting it.
-                    farmer.Position = Vector2.Lerp(farmer.Position, idealPosition, 0.4f);
+                    if (dash.Timer <= 0)
+                    {
+                        finishedDashes.Add(farmerId);
+                    }
                 }
 
                 foreach (long id in finishedDashes)
                 {
                     this._activeRemoteDashes.Remove(id);
+                    Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == id);
+                    if (farmer != null)
+                    {
+                        // Ensure the player stops cleanly when the dash timer expires.
+                        farmer.xVelocity = 0;
+                        farmer.yVelocity = 0;
+                    }
                 }
             }
 
@@ -188,7 +196,7 @@ namespace MovementOverhaul
             ModEntry.Instance.LogDebug("DASH ATTACK ACTIVATE WOOSH WOOSH");
 
             this.isDashing = true;
-            this.dashTimer = 10; // Duration of the forward movement
+            this.dashTimer = 20; // Duration of the forward movement
             this.dashDirection = ModEntry.GetDirectionVectorFromFacing(Game1.player.FacingDirection);
 
             // Clear the list of hit monsters at the start of each dash.
@@ -224,13 +232,23 @@ namespace MovementOverhaul
 
             if (msg.IsStarting && farmer is not null)
             {
-                // Create the new DashState, capturing the remote player's current position as the start point.
-                this._activeRemoteDashes[msg.PlayerID] = new DashState(10, msg.Direction, farmer.Position);
+                // Apply a one-time velocity impulse
+                // Tweak dashImpulse float to change dash distance (to test)
+                const float dashImpulse = 12f;
+                farmer.xVelocity = msg.Direction.X * dashImpulse;
+                farmer.yVelocity = msg.Direction.Y * dashImpulse;
+
+                this._activeRemoteDashes[msg.PlayerID] = new DashState(20, msg.Direction);
             }
             else
             {
-                if (this._activeRemoteDashes.ContainsKey(msg.PlayerID))
+                // If we receive a message that the dash ended, stop it immediately.
+                if (this._activeRemoteDashes.ContainsKey(msg.PlayerID) && farmer is not null)
+                {
                     this._activeRemoteDashes.Remove(msg.PlayerID);
+                    farmer.xVelocity = 0;
+                    farmer.yVelocity = 0;
+                }
             }
         }
 
@@ -241,6 +259,52 @@ namespace MovementOverhaul
             ModEntry.Instance.LogDebug($"Sending dash state sync message. IsStarting: {isStarting}.");
             var message = new DashAttackMessage(Game1.player.UniqueMultiplayerID, isStarting, direction);
             this.Multiplayer.SendMessage(message, "DashAttackStateChanged", modIDs: new[] { this.ModManifest.UniqueID });
+        }
+        private void CreateDashParticle(Farmer who, string particleType, Vector2 dashDirection)
+        {
+            Vector2 particlePos;
+
+            // Check the config to see which particle style to use
+            if (ModEntry.Instance.Config.LaggingDashParticles)
+            {
+                // Lagging effect: Spawn particles BEHIND the player.
+                Vector2 oppositeDirection = -dashDirection; // The direction opposite to the dash
+                float lagDistance = 48f; // How many pixels behind the player
+
+                particlePos = who.getStandingPosition() + new Vector2(-32, -48); // Start at player's center
+                particlePos += oppositeDirection * lagDistance; // Move backwards
+                particlePos += new Vector2(Game1.random.Next(-24, 24), Game1.random.Next(-24, 24)); // Add some random jitter
+            }
+            else
+            {
+                // Original centered effect
+                particlePos = who.getStandingPosition() + new Vector2(-32, -48);
+                particlePos += new Vector2(Game1.random.Next(-32, 32), Game1.random.Next(-32, 32));
+            }
+
+            // Reuse static method from SprintLogic
+            TemporaryAnimatedSprite? spriteToAdd = SprintLogic.GetSpriteForType(particleType, particlePos);
+            if (spriteToAdd != null)
+            {
+                // Make the particles a bit bigger and fade faster for a more impactful "poof"
+                spriteToAdd.scale *= 1.2f;
+                spriteToAdd.alphaFade = 0.02f;
+                who.currentLocation.temporarySprites.Add(spriteToAdd);
+            }
+        }
+
+        public void CreateRemoteDashParticleBurst(long playerID, string particleType)
+        {
+            Farmer? farmer = Game1.getOnlineFarmers().FirstOrDefault(f => f.UniqueMultiplayerID == playerID);
+            // Try to find the active dash state for this remote player to get their dash direction
+            if (farmer != null && !farmer.IsLocalPlayer && this._activeRemoteDashes.TryGetValue(playerID, out var dashState))
+            {
+                Vector2 direction = dashState.Direction;
+                for (int i = 0; i < 3; i++)
+                {
+                    this.CreateDashParticle(farmer, particleType, direction);
+                }
+            }
         }
     }
 
