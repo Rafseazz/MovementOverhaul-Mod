@@ -384,6 +384,16 @@ namespace MovementOverhaul
         {
             GameLocation location = Game1.currentLocation;
 
+            if (location is StardewValley.Locations.MineShaft)
+            {
+                // Ladders tile index = 173 @ Buildings layer
+                if (location.getTileIndexAt((int)tile.X, (int)tile.Y, "Buildings") == 173)
+                {
+                    ModEntry.Instance.LogDebug($"--> Tile {tile} is a mine ladder. It can be jumped over.");
+                    return true;
+                }
+            }
+
             // Check for the custom "Jumpable" property on the map tile.
             string? jumpableProp = location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Jumpable", "Back")
                                    ?? location.doesTileHaveProperty((int)tile.X, (int)tile.Y, "Jumpable", "Buildings");

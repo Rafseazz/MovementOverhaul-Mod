@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MovementOverhaul")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b00ab730a9746f35d51db23bdfa081f98660d932")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4534af20e00552b2af2976cbd452934010f82bec")]
 [assembly: System.Reflection.AssemblyProductAttribute("MovementOverhaul")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MovementOverhaul")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
