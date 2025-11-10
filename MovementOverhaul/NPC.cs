@@ -176,11 +176,16 @@ namespace MovementOverhaul
                 }
             }
 
-            // NPC Annoyance Logic
+            // NPC Pause & Annoyance Logic
             if (ModEntry.Instance.Config.WhistleAnnoysNPCs && whistler.currentLocation is not Farm)
             {
                 foreach (NPC npc in whistler.currentLocation.characters.OfType<NPC>())
                 {
+                    if (ModEntry.NpcExclusionListWhistlingSet.Contains(npc.Name))
+                    {
+                        continue;
+                    }
+
                     if (npc.IsMonster || !npc.IsVillager || Vector2.Distance(whistler.Tile, npc.Tile) > 10)
                         continue;
 
@@ -369,7 +374,7 @@ namespace MovementOverhaul
         {
             try
             {
-                if (!ModEntry.Instance.Config.EnableRunningLate || !__instance.IsVillager || __instance.controller == null)
+                if (!ModEntry.Instance.Config.EnableRunningLate || !__instance.IsVillager || __instance.controller == null || ModEntry.NpcExclusionListRunningLateSet.Contains(__instance.Name))
                     return;
 
                 // Check if the NPC is following a schedule path

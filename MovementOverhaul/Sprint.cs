@@ -52,6 +52,9 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             if (!ModEntry.Instance.Config.EnableSprint) return;
 
             //ModEntry.Instance.LogDebug($"Button pressed: {e.Button}. Current sprint mode: {ModEntry.Instance.Config.SprintActivation}."); //debug

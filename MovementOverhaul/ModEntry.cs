@@ -175,6 +175,8 @@ namespace MovementOverhaul
         public int WhistleFriendshipPenalty { get; set; } = 10;
         public bool EnableRunningLate { get; set; } = true;
         public int DistanceConsideredFar { get; set; } = 100;
+        public string NpcExclusionListWhistling { get; set; } = "Krobus, Dwarf, Sandy, Marlon, Gunther, Mr. Qi";
+        public string NpcExclusionListRunningLate { get; set; } = "Krobus, Dwarf, Sandy, Marlon, Gunther, Mr. Qi";
     }
 
     public enum JumpState { Idle, Jumping, Falling }
@@ -183,6 +185,8 @@ namespace MovementOverhaul
     {
         // A dictionary to track the sitting state of all remote players.
         private static readonly Dictionary<long, SitStateMessage> _remoteSitters = new();
+        public static HashSet<string> NpcExclusionListWhistlingSet { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
+        public static HashSet<string> NpcExclusionListRunningLateSet { get; private set; } = new(StringComparer.OrdinalIgnoreCase);
         public static IMonitor SMonitor { get; private set; } = null!;
         public static ModEntry Instance { get; private set; } = null!;
         public ModConfig Config { get; private set; } = null!;
@@ -209,12 +213,32 @@ namespace MovementOverhaul
             this.Monitor.Log(message, LogLevel.Debug);
         }
 
+        private static void ParseExclusionLists()
+        {
+            NpcExclusionListWhistlingSet = new HashSet<string>(
+                Instance.Config.NpcExclusionListWhistling.Split(',')
+                    .Select(name => name.Trim())
+                    .Where(name => !string.IsNullOrEmpty(name)),
+                StringComparer.OrdinalIgnoreCase
+            );
+            Instance.LogDebug($"NPC exclusion list parsed. {NpcExclusionListWhistlingSet.Count} NPCs will be ignored by whistle mechanics.");
+
+            NpcExclusionListRunningLateSet = new HashSet<string>(
+                Instance.Config.NpcExclusionListRunningLate.Split(',')
+                    .Select(name => name.Trim())
+                    .Where(name => !string.IsNullOrEmpty(name)),
+                StringComparer.OrdinalIgnoreCase
+            );
+            Instance.LogDebug($"NPC exclusion list parsed. {NpcExclusionListRunningLateSet.Count} NPCs will be ignored by running late mechanics.");
+        }
+
         public override void Entry(IModHelper helper)
         {
             SMonitor = this.Monitor;
             Instance = this;
             Config = this.Helper.ReadConfig<ModConfig>();
 
+            ParseExclusionLists();
             SprintLogic = new SprintLogic(helper, helper.Multiplayer, this.ModManifest);
             JumpLogic = new JumpLogic(helper, helper.Multiplayer, this.ModManifest);
             SitLogic = new SitLogic(helper, this.Monitor, helper.Multiplayer, this.ModManifest);
@@ -269,6 +293,9 @@ namespace MovementOverhaul
         [EventPriority(EventPriority.High)]
         private void OnButtonPressed_Combat_CooldownCheck(object? sender, ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             if (CombatLogic.CheckAndBlockCooldown(e))
             {
                 this.Helper.Input.Suppress(e.Button);
@@ -424,6 +451,7 @@ namespace MovementOverhaul
                     this.Helper.WriteConfig(Config);
                     this.UnhookJumpEvents();
                     this.HookUpJumpEvents();
+                    ParseExclusionLists();
                 }
             );
             // Debug Mode
@@ -551,11 +579,25 @@ namespace MovementOverhaul
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-annoys-npcs.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-annoys-npcs.tooltip"), getValue: () => Config.WhistleAnnoysNPCs, setValue: value => Config.WhistleAnnoysNPCs = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.whistle-tolerance.name"), tooltip: () => this.Helper.Translation.Get("config.whistle-tolerance.tooltip"), min: 0, max: 20, interval: 1, getValue: () => Config.WhistleNumberBeforeAnnoying, setValue: value => Config.WhistleNumberBeforeAnnoying = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.annoyance-penalty.name"), tooltip: () => this.Helper.Translation.Get("config.annoyance-penalty.tooltip"), min: 0, max: 50, interval: 5, getValue: () => Config.WhistleFriendshipPenalty, setValue: value => Config.WhistleFriendshipPenalty = value);
+            configMenu.AddTextOption(
+                mod: this.ModManifest,
+                name: () => this.Helper.Translation.Get("config.npc-exclusion-list-whistling.name"),
+                tooltip: () => this.Helper.Translation.Get("config.npc-exclusion-list-whistling.tooltip"),
+                getValue: () => Config.NpcExclusionListWhistling,
+                setValue: value => Config.NpcExclusionListWhistling = value
+            );
 
             // NPC MOVEMENT
             configMenu.AddSectionTitle(mod: this.ModManifest, text: () => this.Helper.Translation.Get("config.npc-movement-section.title"));
             configMenu.AddBoolOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.running-late.name"), tooltip: () => this.Helper.Translation.Get("config.running-late.tooltip"), getValue: () => Config.EnableRunningLate, setValue: value => Config.EnableRunningLate = value);
             configMenu.AddNumberOption(mod: this.ModManifest, name: () => this.Helper.Translation.Get("config.far-distance.name"), tooltip: () => this.Helper.Translation.Get("config.far-distance.tooltip"), min: 0, max: 500, interval: 10, getValue: () => Config.DistanceConsideredFar, setValue: value => Config.DistanceConsideredFar = value);
+            configMenu.AddTextOption(
+                mod: this.ModManifest,
+                name: () => this.Helper.Translation.Get("config.npc-exclusion-list-runninglate.name"),
+                tooltip: () => this.Helper.Translation.Get("config.npc-exclusion-list-runninglate.tooltip"),
+                getValue: () => Config.NpcExclusionListRunningLate,
+                setValue: value => Config.NpcExclusionListRunningLate = value
+            );
         }
     }
 }

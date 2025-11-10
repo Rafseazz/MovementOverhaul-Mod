@@ -184,6 +184,8 @@
   "config.whistle-tolerance.tooltip": "How many whistling a NPC can tolerate before it becomes annoying.",
   "config.annoyance-penalty.name": "Annoyance Friendship Penalty",
   "config.annoyance-penalty.tooltip": "How much friendship you lose for whistling at an already-annoyed NPC.",
+  "config.npc-exclusion-list-whistling.name": "Exclude NPCs from the whistling mechanic",
+  "config.npc-exclusion-list-whistling.tooltip": "List of NPC names to exclude for whistling mechanic.",
 
   // NPC movement
   "config.npc-movement-section.title": "NPC Movement",
@@ -191,6 +193,8 @@
   "config.running-late.tooltip": "If enabled, NPCs will walk faster if they are far away from their destination.",
   "config.far-distance.name": "Distance considered far for NPC.",
   "config.far-distance.tooltip": "How much tiles is considered far for an NPC for them to start running. (Example: 20 means NPC will run until reaching 20 tiles near their destination)",
+  "config.npc-exclusion-list-runninglate.name": "Exclude NPCs from the running-late mechanic",
+  "config.npc-exclusion-list-runninglate.tooltip": "List of NPC names to exclude for running-late mechanic.",
 
   // == In-Game Messages ==
   "hud.social-sitting.npc": "{{npcName}} appreciated your company.",

@@ -44,6 +44,9 @@ namespace MovementOverhaul
 
         public void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             if (Game1.player.isRidingHorse())
                 return;
 

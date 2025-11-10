@@ -65,6 +65,9 @@ namespace MovementOverhaul
 
         public bool OnButtonPressed_Instant(ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return false;
+
             if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.player.IsSitting() || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return false;
 
@@ -75,6 +78,9 @@ namespace MovementOverhaul
 
         public void OnButtonPressed_Charge(object? sender, ButtonPressedEventArgs e)
         {
+            if (!Context.IsWorldReady)
+                return;
+
             if (!ModEntry.Instance.Config.EnableJump || e.Button != ModEntry.Instance.Config.JumpKey || !Game1.player.canMove || Game1.player.IsSitting() || Game1.eventUp || this._activeJumps.ContainsKey(Game1.player.UniqueMultiplayerID))
                 return;
 
