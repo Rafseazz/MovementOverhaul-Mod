@@ -26,7 +26,11 @@ namespace MovementOverhaul
             if (!Context.IsWorldReady
                 || Game1.player.stamina >= Game1.player.MaxStamina
                 || ModEntry.SprintLogic.IsSprinting
-                || ModEntry.SitLogic.IsSittingOnGround)
+                || ModEntry.SitLogic.IsSittingOnGround
+                || Game1.player.UsingTool
+                || !Context.IsPlayerFree
+                || Game1.paused
+                )
             {
                 // Only log if we were just in a regen state, to indicate why it stopped.
                 if (this.wasInRegenStateLastTick)

@@ -65,9 +65,18 @@ namespace MovementOverhaul
             {
                 ModEntry.Instance.LogDebug("Sit key pressed.");
                 if (this.isSittingOnGround)
+                {
                     this.StopSittingOnGround();
+                }
                 else if (Context.CanPlayerMove)
+                {
+                    if (Game1.player.UsingTool || Game1.player.isEating || Game1.player.swimming.Value)
+                    {
+                        ModEntry.Instance.LogDebug("Action blocked: Cannot sit while using a tool, eating, or swimming.");
+                        return;
+                    }
                     this.StartSittingOnGround();
+                }
             }
         }
 
@@ -112,9 +121,9 @@ namespace MovementOverhaul
 
             if (this.isSittingOnGround)
             {
-                if (Game1.player.movementDirections.Any())
+                if (Game1.player.movementDirections.Any() || Game1.player.UsingTool)
                 {
-                    ModEntry.Instance.LogDebug("Player moved while sitting. Standing up.");
+                    ModEntry.Instance.LogDebug("Player moved or used a tool while sitting. Standing up.");
                     this.StopSittingOnGround();
                     return;
                 }
@@ -201,30 +210,34 @@ namespace MovementOverhaul
             this.sittingFrame = -1;
             this.sittingIsFlipped = false;
             Game1.player.yJumpOffset = 0;
-            Game1.player.flip = false;
-            Game1.player.canMove = true;
-            Game1.player.FarmerSprite.StopAnimation();
 
-            switch (Game1.player.FacingDirection)
+            if (!Game1.player.UsingTool)
             {
-                case 0:
-                    Game1.player.flip = false;
-                    Game1.player.FarmerSprite.setCurrentFrame(12);
-                    break;
-                case 1:
-                    Game1.player.flip = false;
-                    Game1.player.FarmerSprite.setCurrentFrame(6);
-                    break;
-                case 2:
-                    Game1.player.flip = false;
-                    Game1.player.FarmerSprite.setCurrentFrame(0);
-                    break;
-                case 3:
-                    Game1.player.flip = true;
-                    Game1.player.FarmerSprite.setCurrentFrame(6);
-                    break;
-            }
+                Game1.player.flip = false;
+                Game1.player.canMove = true;
+                Game1.player.FarmerSprite.StopAnimation();
 
+                switch (Game1.player.FacingDirection)
+                {
+                    case 0:
+                        Game1.player.FarmerSprite.setCurrentFrame(12);
+                        break;
+                    case 1:
+                        Game1.player.FarmerSprite.setCurrentFrame(6);
+                        break;
+                    case 2:
+                        Game1.player.FarmerSprite.setCurrentFrame(0);
+                        break;
+                    case 3:
+                        Game1.player.flip = true;
+                        Game1.player.FarmerSprite.setCurrentFrame(6);
+                        break;
+                }
+            }
+            else
+            {
+                Game1.player.canMove = true;
+            }
             this.SyncSitState(isStandingUp: true);
         }
 

@@ -3,40 +3,44 @@
   "WorkspaceRootPath": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\npc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\npc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\sit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\sit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\manifest.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\sprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\sprint.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\walkstand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\walkstand.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\modentry.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\i18n\\default.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\combat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\combat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\animation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\animation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\npc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\npc.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\jump.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|c:\\users\\user\\documents\\github\\movementoverhaul-mod\\movementoverhaul\\combat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E8E7F705-922E-4CDF-916F-9A08E3326F09}|MovementOverhaul\\MovementOverhaul.csproj|solutionrelative:movementoverhaul\\combat.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -46,11 +50,24 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 1,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 1,
+              "Title": "manifest.json",
+              "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\manifest.json",
+              "RelativeDocumentMoniker": "MovementOverhaul\\manifest.json",
+              "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\manifest.json",
+              "RelativeToolTip": "MovementOverhaul\\manifest.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAMAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-11-11T01:11:15.593Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
               "Title": "default.json",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\i18n\\default.json",
               "RelativeDocumentMoniker": "MovementOverhaul\\i18n\\default.json",
@@ -62,7 +79,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 4,
               "Title": "ModEntry.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\ModEntry.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\ModEntry.cs",
@@ -70,50 +87,48 @@
               "RelativeToolTip": "MovementOverhaul\\ModEntry.cs",
               "ViewState": "AgIAAM8AAAAAAAAAAAAuwNcAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-13T04:32:49.986Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-13T04:32:49.986Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 3,
               "Title": "WalkStand.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\WalkStand.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\WalkStand.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\WalkStand.cs",
               "RelativeToolTip": "MovementOverhaul\\WalkStand.cs",
-              "ViewState": "AgIAADgAAAAAAAAAAAAAAFgAAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAAwB8AAAAfAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-13T04:32:49.574Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 2,
               "Title": "Sprint.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Sprint.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Sprint.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Sprint.cs",
               "RelativeToolTip": "MovementOverhaul\\Sprint.cs",
-              "ViewState": "AgIAACUAAAAAAAAAAAAqwDcAAAAXAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAIcAAAAyAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-13T04:33:15.931Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-13T04:33:15.931Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 0,
               "Title": "Sit.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Sit.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Sit.cs",
               "ToolTip": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Sit.cs",
               "RelativeToolTip": "MovementOverhaul\\Sit.cs",
-              "ViewState": "AgIAABwAAAAAAAAAAAAuwC8AAAAXAAAAAAAAAA==",
+              "ViewState": "AgIAANkAAAAAAAAAAAAAAOwAAAAQAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-09-13T04:33:15.387Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 7,
               "Title": "NPC.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\NPC.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\NPC.cs",
@@ -121,12 +136,11 @@
               "RelativeToolTip": "MovementOverhaul\\NPC.cs",
               "ViewState": "AgIAAGMBAAAAAAAAAAAAAGcBAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-13T04:33:14.811Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-13T04:33:14.811Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 8,
               "Title": "Jump.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Jump.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Jump.cs",
@@ -134,12 +148,11 @@
               "RelativeToolTip": "MovementOverhaul\\Jump.cs",
               "ViewState": "AgIAAEMAAAAAAAAAAAAwwFEAAAAWAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-09-13T04:33:13.916Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-09-13T04:33:13.916Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "Combat.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Combat.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Combat.cs",
@@ -151,7 +164,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 6,
               "Title": "Animation.cs",
               "DocumentMoniker": "C:\\Users\\User\\Documents\\GitHub\\MovementOverhaul-Mod\\MovementOverhaul\\Animation.cs",
               "RelativeDocumentMoniker": "MovementOverhaul\\Animation.cs",

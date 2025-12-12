@@ -1,0 +1,6 @@
+Make a new config specific to "Jump across water"
+Make a new config to prevent stamina regen while fishing or watering crop animation (on by default)
+
+Bugs?
+stamina is still regenerating when the game is paused
+you can still lose stamina when having the infinite energy blessing

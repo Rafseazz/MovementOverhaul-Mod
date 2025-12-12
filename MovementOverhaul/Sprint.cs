@@ -29,6 +29,7 @@ namespace MovementOverhaul
         // State for Controller DoubleTap
         private int lastControllerDirection = -1;
         private uint lastControllerFlickTime = 0;
+        private bool wasMovingLastFrame = false;
 
         // State for Toggle mode
         private bool isToggleSprintOn = false;
@@ -110,28 +111,29 @@ namespace MovementOverhaul
             if (!Game1.options.gamepadControls)
                 return;
 
-            if (!Context.IsPlayerFree || !Game1.player.movementDirections.Any())
-            {
-                if ((uint)Game1.currentGameTime.TotalGameTime.TotalMilliseconds - this.lastControllerFlickTime > TapTimeThreshold)
-                {
-                    this.lastControllerDirection = -1;
-                }
-                return;
-            }
-
-            int currentDirection = Game1.player.movementDirections[0];
+            bool isMovingNow = Context.IsPlayerFree && Game1.player.movementDirections.Any();
+            int currentDirection = isMovingNow ? Game1.player.movementDirections[0] : -1;
             uint currentTime = (uint)Game1.currentGameTime.TotalGameTime.TotalMilliseconds;
 
-            if (currentDirection != -1 && currentDirection == this.lastControllerDirection && currentTime - this.lastControllerFlickTime < TapTimeThreshold)
+            if (isMovingNow && !this.wasMovingLastFrame)
             {
-                if (!this.IsSprinting) this.ActivateSprint();
-                this.lastControllerDirection = -1;
+                if (currentDirection == this.lastControllerDirection && (currentTime - this.lastControllerFlickTime) < TapTimeThreshold)
+                {
+                    if (!this.IsSprinting)
+                    {
+                        ModEntry.Instance.LogDebug("Controller Double-Tap confirmed. Activating Sprint.");
+                        this.ActivateSprint();
+                        this.lastControllerDirection = -1;
+                    }
+                }
+                else
+                {
+                    this.lastControllerDirection = currentDirection;
+                    this.lastControllerFlickTime = currentTime;
+                }
             }
 
-            if (currentDirection != -1)
-                this.lastControllerFlickTime = currentTime;
-
-            this.lastControllerDirection = currentDirection;
+            this.wasMovingLastFrame = isMovingNow;
         }
 
         public void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
